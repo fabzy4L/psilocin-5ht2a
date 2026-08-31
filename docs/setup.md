@@ -59,3 +59,46 @@ a short test run to confirm GPU utilization before committing to a long job.
   cryo-EM stabilization — these are not part of the biological receptor.
 - Check protonation states of key residues (especially the conserved
   Asp3.32) at your simulation pH before force field assignment.
+
+### Confirmed specifics (from actually walking the PDB)
+
+- **BRIL fusion**: single-chain 5-HT2A/cytochrome-b562RIL construct, not a
+  separate chain. BRIL replaces native ICL3 in-frame between receptor
+  residues 265 and 311, renumbered 1001-1106 in the file (CA trace jumps
+  265→1001, then 1106→311). `01_fetch_receptor.py` now drops this range
+  by default.
+- **Orthosteric pocket center** (co-crystallized agonist 7LD /
+  25-CN-NBOH, chain A, resi A1201, centroid of 24 heavy atoms):
+  `(25.115, 40.909, 54.225)`. Already wired into `03_run_vina.py`.
+- **Missing loop density** (beyond the BRIL splice): gaps at residues
+  182-183 and 216-218. `01_fetch_receptor.py` inserts `TER` at every
+  numbering discontinuity so downstream tools don't try to bond across
+  them.
+- **Truncated side chains near the pocket**: at ~3-4 Å resolution, ~80
+  residues have partially unresolved side chains. Most are safely far
+  from the binding site and can be auto-repaired/deleted, but nine sit
+  within 5 Å of the docking box and need real attention rather than
+  silent deletion: **A:89, 135, 136, 146, 147, 348, 350, 351, 356**.
+  `01b_prep_receptor.py --bad-res-radius` flags this distinction
+  automatically.
+
+### Open blocker: receptor → PDBQT via meeko
+
+`mk_prepare_receptor` (meeko) does strict RDKit-template-based residue
+parsing. Even after repairing missing side-chain atoms with PDBFixer
+(`addMissingAtoms`) and stripping the spurious `OXT` it adds at internal
+disorder breaks (PDBFixer treats every numbering gap as a chain
+terminus), it still fails — currently on the true C-terminus (TYR 399)
+with an `AtomValenceException` on the terminal oxygen. This looks like a
+geometry/bond-perception edge case at chain ends rather than something
+worth patching further blind.
+
+**Next step**: either (a) fix the TYR 399 terminus by hand in
+ChimeraX/PyMOL (cap or adjust OXT geometry) and re-run
+`01b_prep_receptor.py`, or (b) fall back to ADFR's
+`prepare_receptor4.py` (MGLTools), which does geometry-based typing
+instead of strict template matching and is the more commonly used tool
+for GPCR cryo-EM structures with this kind of local disorder — SERT's
+sister project (`sert-s438t-escitalopram`) hit similar structure-cleanup
+issues and worked through them with ChimeraX scripts
+(`scripts/*.cxc`), which is a reasonable template to follow here.

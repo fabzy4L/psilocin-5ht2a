@@ -19,19 +19,51 @@ def fetch_pdb(pdb_id: str, out_path: Path) -> None:
     print(f"Saved {pdb_id} -> {out_path}")
 
 
-def strip_to_receptor_chain(in_path: Path, out_path: Path, chain: str = "A") -> None:
+BRIL_RESNUM_RANGE = (1001, 1106)  # inclusive; see NOTE below
+
+
+def strip_to_receptor_chain(
+    in_path: Path, out_path: Path, chain: str = "A", drop_bril: bool = True
+) -> None:
     """
-    Very crude first pass: keep ATOM/HETATM records for the given chain only,
-    drop the bound ligand/lipids/waters. Inspect the PDB header first and
-    adjust `chain` and any HETATM exclusions (nanobody, fusion partners,
-    cholesterol hemisuccinate, etc. are common in GPCR cryo-EM structures
-    and need to be stripped manually before use).
+    Very crude first pass: keep ATOM records for the given chain only, drop
+    all HETATM (bound ligand 7LD, cholesterol CLR, oleic acid OLA, PEG/1PE
+    crystallization additives, phosphate PO4 — confirmed via `HET` records
+    in 6WGT).
+
+    NOTE on the BRIL fusion: 6WGT's construct is a single-chain
+    5-HT2A/cytochrome-b562RIL (BRIL) fusion, not a separate chain. BRIL
+    replaces native ICL3 in-frame between receptor residues 265 and 311,
+    and is itself renumbered 1001-1106 in the PDB (confirmed by walking
+    CA residue numbers in chain A: the sequence jumps 265->1001 and then
+    1106->311). Chain-only filtering does NOT remove it, so this function
+    drops BRIL_RESNUM_RANGE by default (drop_bril=True) — it is not part
+    of the biological receptor (docs/setup.md), and leaving it in causes
+    real downstream problems: BRIL folds back spatially close to parts of
+    the TM bundle despite being sequence-distant, which trips up
+    distance-based bond perception in receptor-prep tools (meeko) with
+    spurious inter-residue bonds. Pass drop_bril=False to keep it (e.g.
+    to inspect the raw construct).
+
+    Also inserts a TER record at every remaining residue-numbering
+    discontinuity (missing loop density: 182-183, 216-218), not just
+    between chains. Without this, downstream tools try to bond across the
+    gap and fail residue template matching for everything after it.
     """
     keep = []
+    prev_resnum = None
     with open(in_path) as f:
         for line in f:
-            if line.startswith(("ATOM", "TER")) and line[21] == chain:
-                keep.append(line)
+            if not line.startswith(("ATOM", "TER")) or line[21] != chain:
+                continue
+            if line.startswith("ATOM"):
+                resnum = int(line[22:26])
+                if drop_bril and BRIL_RESNUM_RANGE[0] <= resnum <= BRIL_RESNUM_RANGE[1]:
+                    continue
+                if prev_resnum is not None and resnum != prev_resnum and resnum != prev_resnum + 1:
+                    keep.append("TER\n")
+                prev_resnum = resnum
+            keep.append(line)
     with open(out_path, "w") as f:
         f.writelines(keep)
         f.write("END\n")

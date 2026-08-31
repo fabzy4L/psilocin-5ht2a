@@ -21,8 +21,10 @@ from pathlib import Path
 
 from vina import Vina
 
-# TODO: replace with the actual orthosteric pocket center from 6WGT
-BOX_CENTER = (0.0, 0.0, 0.0)
+# Orthosteric pocket center = centroid of the co-crystallized agonist 7LD
+# (25-CN-NBOH), chain A, residue A1201, in 6WGT (24 heavy atoms).
+# Computed directly from data/raw/6WGT.pdb HETATM records.
+BOX_CENTER = (25.115, 40.909, 54.225)
 BOX_SIZE = (20.0, 20.0, 20.0)
 
 
