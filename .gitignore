@@ -1,10 +1,12 @@
 # data / results
 data/raw/*.pdb
 data/processed/*
+!data/processed/.gitkeep
 data/ligands/pdbqt/
 docking/results/*.pdbqt
 docking/results/*.json
 md/system_prep/*
+!md/system_prep/.gitkeep
 md/scripts/*.trr
 md/scripts/*.xtc
 md/scripts/*.cpt
