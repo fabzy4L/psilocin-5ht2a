@@ -53,17 +53,24 @@ See `docs/setup.md` for GROMACS GPU build notes and CHARMM-GUI walkthrough.
 
 ## Status
 
-- [ ] Phase 1: docking screen
+- [x] Phase 1: docking screen — baseline complete, n=1 seed; see
+  `docs/setup.md` for the full pipeline and caveats
   - [x] Receptor fetch + clean (`01_fetch_receptor.py`) — strips BRIL fusion,
     handles missing-loop chain breaks, verified against 6WGT
   - [x] Orthosteric box center sourced from the co-crystallized agonist
     (see `docs/setup.md`)
   - [x] Ligand prep (`02_prep_ligands.py`) — all 6 comparators (psilocin,
     psilocybin, DMT, 5-MeO-DMT, serotonin, LSD) verified end-to-end
-  - [ ] Receptor → PDBQT (`01b_prep_receptor.py`) — blocked on a
-    meeko/RDKit parsing edge case at the C-terminus; see
-    "Open blocker" in `docs/setup.md`
-  - [ ] Vina docking run
+  - [x] Receptor → PDBQT — `01b_prep_receptor.py` (meeko) hits a parsing
+    edge case on this structure; `01c_prep_receptor_adfr.py` (ADFRsuite)
+    works and is the current path — see `docs/setup.md`
+  - [x] Vina docking run — LSD −10.1, psilocybin −7.9, serotonin −7.1,
+    psilocin −6.9, 5-MeO-DMT −6.9, DMT −6.8 kcal/mol (single-seed; not
+    yet validated by redocking or multi-seed averaging — see
+    `docs/setup.md` before reading anything into the psilocybin > psilocin
+    ordering)
+  - [ ] Multi-seed docking + redocking validation (pattern to port from
+    SERT's `docking_multiseed.py` / `validation_redock.py`)
 - [ ] Phase 2: MD validation
 - [ ] Phase 3: signaling bias (stretch)
 

@@ -82,23 +82,73 @@ a short test run to confirm GPU utilization before committing to a long job.
   `01b_prep_receptor.py --bad-res-radius` flags this distinction
   automatically.
 
-### Open blocker: receptor → PDBQT via meeko
+### Receptor → PDBQT: meeko fails, ADFR works
 
-`mk_prepare_receptor` (meeko) does strict RDKit-template-based residue
-parsing. Even after repairing missing side-chain atoms with PDBFixer
-(`addMissingAtoms`) and stripping the spurious `OXT` it adds at internal
-disorder breaks (PDBFixer treats every numbering gap as a chain
-terminus), it still fails — currently on the true C-terminus (TYR 399)
-with an `AtomValenceException` on the terminal oxygen. This looks like a
-geometry/bond-perception edge case at chain ends rather than something
-worth patching further blind.
+`mk_prepare_receptor` (meeko, `01b_prep_receptor.py`) does strict
+RDKit-template-based residue parsing. Even after repairing missing
+side-chain atoms with PDBFixer, it still fails on this structure — an
+`AtomValenceException` at the true C-terminus (TYR 399) that looks like
+a geometry/bond-perception edge case in meeko's own parsing, not
+something worth chasing further blind.
 
-**Next step**: either (a) fix the TYR 399 terminus by hand in
-ChimeraX/PyMOL (cap or adjust OXT geometry) and re-run
-`01b_prep_receptor.py`, or (b) fall back to ADFR's
-`prepare_receptor4.py` (MGLTools), which does geometry-based typing
-instead of strict template matching and is the more commonly used tool
-for GPCR cryo-EM structures with this kind of local disorder — SERT's
-sister project (`sert-s438t-escitalopram`) hit similar structure-cleanup
-issues and worked through them with ChimeraX scripts
-(`scripts/*.cxc`), which is a reasonable template to follow here.
+**Working path**: ADFRsuite's `prepare_receptor` (`01c_prep_receptor_adfr.py`,
+wrapping the classic AutoDockTools `prepare_receptor4.py`) does
+geometry-based bond building instead of strict template matching, and
+handles this structure fine. ADFRsuite isn't on PyPI/conda-forge
+directly — its official installer is a legacy Tcl/Tk binary that won't
+run headless — but the community `hcc` conda channel has a working
+build:
+
+```bash
+conda create -n adfr -c hcc -c conda-forge adfr-suite
+conda activate adfr
+# no native Windows build — run this from WSL2 (Ubuntu) on Windows
+```
+
+Full pipeline that produced the current `docking/results/summary.json`:
+
+```bash
+python 01_fetch_receptor.py --pdb-id 6WGT --out ../../data/raw/6WGT.pdb
+python 01a_repair_sidechains.py \
+    --in-pdb ../../data/processed/6WGT_chainA.pdb \
+    --out-pdb ../../data/processed/6WGT_chainA_repaired.pdb \
+    --true-terminus-resnum 399
+conda run -n adfr python 01c_prep_receptor_adfr.py \
+    --in-pdb ../../data/processed/6WGT_chainA_repaired.pdb \
+    --out-pdbqt ../../data/processed/6WGT_chainA_adfr.pdbqt
+python 02_prep_ligands.py
+python 03_run_vina.py --receptor ../../data/processed/6WGT_chainA_adfr.pdbqt
+```
+
+`01a_repair_sidechains.py` requires `pdbfixer` + `openmm` (pip-installable;
+not yet added to `envs/environment.yml` — they only need to be present
+in whichever env runs that one script, not necessarily the main one).
+
+One cosmetic warning is expected and harmless: `prepare_receptor` can't
+find Gasteiger parameters for TYR 399's `OXT` (the genuine but
+structurally irrelevant terminus of this truncated crystallization
+construct) and assigns it zero charge. That residue isn't part of the
+binding pocket, so it doesn't affect docking.
+
+### Phase 1 baseline result (rigid single-structure docking, n=1 seed)
+
+| Ligand | Best affinity (kcal/mol) |
+|---|---:|
+| LSD | −10.1 |
+| psilocybin | −7.9 |
+| serotonin | −7.1 |
+| psilocin | −6.9 |
+| 5-MeO-DMT | −6.9 |
+| DMT | −6.8 |
+
+LSD's outsized affinity matches its well-documented extreme 5-HT2A
+residence time. Psilocybin scoring *better* than psilocin here is
+probably a rigid-docking artifact (its phosphate group is finding
+favorable polar contacts that wouldn't survive an induced-fit or MD
+treatment) rather than a real result — psilocybin is a prodrug and is
+not generally thought to engage 5-HT2A directly as well as psilocin
+does. Don't read anything into this ranking until: (1) multi-seed
+docking for a proper SD (see SERT's `docking_multiseed.py` for the
+pattern), and (2) redocking validation against the co-crystallized 7LD
+ligand to confirm the pipeline reproduces a known pose (again, SERT's
+`validation_redock.py` is the template to port over).
