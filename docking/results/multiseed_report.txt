@@ -1,0 +1,21 @@
+Psilocin/5-HT2A — Multi-Seed Docking Results
+AutoDock Vina | exhaustiveness=16 | seeds=[42, 123, 456, 789, 1001]
+======================================================================
+
+Ligand           mean (kcal/mol)       SD    n
+---------------------------------------------
+LSD                      -10.045    0.021    5
+psilocybin                -7.837    0.033    5
+serotonin                 -7.083    0.019    5
+5-MeO-DMT                 -6.982    0.018    5
+psilocin                  -6.937    0.021    5
+DMT                       -6.872    0.054    5
+
+----------------------------------------------------------------------
+NOTE: this is still rigid single-structure docking. Multi-seed
+averaging bounds Vina's search-stochasticity noise; it does not
+address receptor flexibility, solvation, or scoring-function bias
+(e.g. psilocybin's phosphate group finding polar contacts a
+flexible or MD treatment likely wouldn't preserve). See
+05_validation_redock.py for a check on whether this box/protocol
+reproduces the known co-crystallized pose at all.

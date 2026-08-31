@@ -1,0 +1,28 @@
+============================================================
+DOCKING VALIDATION - 7LD (LSD) SELF-REDOCK
+============================================================
+
+[1] Extracting co-crystallized 7LD pose from raw 6WGT...
+
+[2] Box proximity check...
+  Crystal pose centroid: [25.115, 40.909, 54.225]
+  Box centre:            (25.115, 40.909, 54.225)
+  Distance:               0.001 A
+  Inside grid:            YES
+  (expected to trivially pass: the box center IS this ligand's own crystal centroid, per docs/setup.md — this just confirms that wiring is still correct, not that docking works)
+
+[3] Preparing ligand PDBQT (OpenBabel, coordinates preserved)...
+
+[4] Redocking into the prepared receptor...
+  Best redocked affinity: -10.069 kcal/mol
+
+[5] Heavy-atom RMSD vs crystal pose (top pose only)...
+  RMSD: 5.198 A  [FAIL (<2.0 A)]
+
+============================================================
+SUMMARY
+============================================================
+  Redock RMSD < 2.0 A: FAIL  (5.198 A)
+  Best redock affinity:    -10.069 kcal/mol
+  Reference pose:          ../results/7LD_crystal_reference.pdb
+  Redocked poses:          ../results/7LD_redocked.pdbqt

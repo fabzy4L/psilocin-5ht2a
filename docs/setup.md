@@ -67,9 +67,15 @@ a short test run to confirm GPU utilization before committing to a long job.
   residues 265 and 311, renumbered 1001-1106 in the file (CA trace jumps
   265→1001, then 1106→311). `01_fetch_receptor.py` now drops this range
   by default.
-- **Orthosteric pocket center** (co-crystallized agonist 7LD /
-  25-CN-NBOH, chain A, resi A1201, centroid of 24 heavy atoms):
-  `(25.115, 40.909, 54.225)`. Already wired into `03_run_vina.py`.
+- **Orthosteric pocket center** (co-crystallized agonist 7LD, chain A,
+  resi A1201, centroid of 24 heavy atoms): `(25.115, 40.909, 54.225)`.
+  Already wired into `03_run_vina.py`. **Correction**: 7LD is LSD
+  (HETNAM: "LYSERGIC ACID DIETHYLAMIDE"), not 25-CN-NBOH as this note
+  previously said — 6WGT is the LSD-bound 5-HT2A structure (Kim et al.
+  2020). This means LSD in the Phase 1 comparator set is both the
+  co-crystallized ligand and one of the six screened tryptamines, which
+  is what makes the self-redocking check in
+  `05_validation_redock.py` meaningful.
 - **Missing loop density** (beyond the BRIL splice): gaps at residues
   182-183 and 216-218. `01_fetch_receptor.py` inserts `TER` at every
   numbering discontinuity so downstream tools don't try to bond across
@@ -130,6 +136,33 @@ structurally irrelevant terminus of this truncated crystallization
 construct) and assigns it zero charge. That residue isn't part of the
 binding pocket, so it doesn't affect docking.
 
+### Validation: self-redocking of the co-crystallized ligand (LSD/7LD)
+
+`05_validation_redock.py` extracts 7LD's crystal pose directly from
+`data/raw/6WGT.pdb`, redocks it into the prepared receptor with the same
+box used for the Phase 1 screen, and compares the top-scoring redocked
+pose to the crystal pose by heavy-atom RMSD (name-matched, 2.0 Å
+pass/fail threshold — standard convention). Since 7LD is LSD (see
+correction above), this is a true self-redock: the ligand being
+validated against is also one of the six Phase 1 comparators.
+
+**Result: FAIL.** Best redocked affinity (−10.07 kcal/mol) essentially
+reproduces the blind-screen LSD score (−10.1 kcal/mol) — but the pose
+itself has RMSD 5.2 Å from the crystal pose. Per-atom deviation was
+checked atom-by-atom to rule out a symmetric-group name-matching
+artifact (LSD's diethylamide has two chemically equivalent ethyl arms
+that a naive RMSD can inflate if they're swapped) — deviations were
+roughly uniform across all 24 heavy atoms (2.9–8.1 Å), not concentrated
+in 2–3 atoms, which points to a genuinely different binding mode/
+orientation rather than a symmetry artifact.
+
+**This is the single most important caveat for Phase 1**: the pipeline
+converges on a similarly-favorable-scoring pose, not the true pose. That
+means the affinity *rankings* from the blind screen should be read as
+hypothesis-generating only — scoring-function agreement with the
+correct pose is not demonstrated here — until flexible/induced-fit
+docking or MD (Phase 2) confirms binding-site geometry, not just score.
+
 ### Phase 1 baseline result (rigid single-structure docking, n=1 seed)
 
 | Ligand | Best affinity (kcal/mol) |
@@ -147,8 +180,23 @@ probably a rigid-docking artifact (its phosphate group is finding
 favorable polar contacts that wouldn't survive an induced-fit or MD
 treatment) rather than a real result — psilocybin is a prodrug and is
 not generally thought to engage 5-HT2A directly as well as psilocin
-does. Don't read anything into this ranking until: (1) multi-seed
-docking for a proper SD (see SERT's `docking_multiseed.py` for the
-pattern), and (2) redocking validation against the co-crystallized 7LD
-ligand to confirm the pipeline reproduces a known pose (again, SERT's
-`validation_redock.py` is the template to port over).
+does.
+
+### Multi-seed result (n=5 seeds, `04_docking_multiseed.py`)
+
+| Ligand | mean (kcal/mol) | SD | n |
+|---|---:|---:|---:|
+| LSD | −10.045 | 0.021 | 5 |
+| psilocybin | −7.837 | 0.033 | 5 |
+| serotonin | −7.083 | 0.019 | 5 |
+| 5-MeO-DMT | −6.982 | 0.018 | 5 |
+| psilocin | −6.937 | 0.021 | 5 |
+| DMT | −6.872 | 0.054 | 5 |
+
+SD is ≤0.05 kcal/mol for every ligand — an order of magnitude below
+Vina's commonly-cited ~0.5 kcal/mol scoring noise floor. **This rules
+out search stochasticity as the explanation for psilocybin > psilocin**:
+the ranking is highly reproducible *given this box, this receptor
+conformation, and this scoring function*. It says nothing about whether
+that ranking reflects real binding-pose energetics — see the
+self-redocking result immediately above, which suggests it may not.

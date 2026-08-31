@@ -65,12 +65,18 @@ See `docs/setup.md` for GROMACS GPU build notes and CHARMM-GUI walkthrough.
     edge case on this structure; `01c_prep_receptor_adfr.py` (ADFRsuite)
     works and is the current path — see `docs/setup.md`
   - [x] Vina docking run — LSD −10.1, psilocybin −7.9, serotonin −7.1,
-    psilocin −6.9, 5-MeO-DMT −6.9, DMT −6.8 kcal/mol (single-seed; not
-    yet validated by redocking or multi-seed averaging — see
-    `docs/setup.md` before reading anything into the psilocybin > psilocin
-    ordering)
-  - [ ] Multi-seed docking + redocking validation (pattern to port from
-    SERT's `docking_multiseed.py` / `validation_redock.py`)
+    psilocin −6.9, 5-MeO-DMT −6.9, DMT −6.8 kcal/mol (single-seed
+    baseline; see multi-seed results below)
+  - [x] Multi-seed docking + redocking validation (`04_docking_multiseed.py` /
+    `05_validation_redock.py`, ported from SERT's
+    `docking_multiseed.py` / `validation_redock.py`) — 5-seed means match
+    the single-seed baseline within ≤0.05 kcal/mol SD, so the ranking is
+    **not** search-noise; but self-redocking the co-crystallized ligand
+    (7LD = LSD) gives RMSD 5.2 Å against the crystal pose (fail, <2.0 Å
+    threshold) despite reproducing its affinity almost exactly — the
+    scores are reproducible, the *pose* isn't validated. See
+    `docs/setup.md` for the full breakdown before reading anything into
+    the psilocybin > psilocin ordering.
 - [ ] Phase 2: MD validation
 - [ ] Phase 3: signaling bias (stretch)
 
