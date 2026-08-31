@@ -3,13 +3,21 @@ Docking box / protocol validation: extract the co-crystallized ligand from
 6WGT itself and re-dock it into the prepared receptor, then check the
 top-scoring redocked pose against the experimental pose by heavy-atom RMSD.
 
-6WGT's HET record "7LD" is LSD (HETNAM: "LYSERGIC ACID DIETHYLAMIDE") —
+6WGT's HET record "7LD" is LSD (HETNAM: "LYSERGIC ACID DIETHYLAMIDE";
+independently confirmed against RCSB's entry, which names it
+"(8alpha)-N,N-diethyl-6-methyl-9,10-didehydroergoline-8-carboxamide" and
+cites Kim et al., "Structure of a Hallucinogen-Activated Gq-Coupled
+5-HT2A Serotonin Receptor," Cell 2020, doi:10.1016/j.cell.2020.08.024) —
 correcting an earlier note in docs/setup.md that mislabeled it as
 25-CN-NBOH. That means this validation is a genuine self-redock test:
 LSD is both the co-crystallized agonist AND one of the six comparators in
 the Phase 1 screen, so a pass here is direct evidence the box/protocol
 that produced the Phase 1 numbers can reproduce a known real pose, not
 just an internally consistent one.
+
+Result as of the current receptor/box (see docs/setup.md for the full
+writeup): FAIL, RMSD 5.2 A. Run with --strict to make that failure
+block downstream scripts rather than just get logged.
 
 Unlike sert-s438t-escitalopram/scripts/validation_redock.py, no
 cross-structure alignment is needed here (SERT's script aligns two
@@ -32,6 +40,7 @@ Usage:
 Requires: numpy, openbabel (obabel on PATH)
 """
 import argparse
+import json
 import shutil
 import subprocess
 import sys
@@ -109,6 +118,16 @@ def main() -> None:
     parser.add_argument("--receptor",
                          default="../../data/processed/6WGT_chainA_adfr.pdbqt")
     parser.add_argument("--out-dir", default="../results")
+    parser.add_argument(
+        "--seed", type=int, default=42,
+        help="Vina search seed (default 42) — pinned so the RMSD/verdict "
+             "is reproducible run to run, matching 04_docking_multiseed.py's "
+             "convention")
+    parser.add_argument(
+        "--strict", action="store_true",
+        help="exit 1 if the redock gate fails, so this can block a CI/"
+             "pipeline step (e.g. 03_run_vina.py / 04_docking_multiseed.py) "
+             "from running against an unvalidated receptor/box")
     args = parser.parse_args()
 
     out_dir = Path(args.out_dir)
@@ -153,7 +172,7 @@ def main() -> None:
         return
 
     log("\n[4] Redocking into the prepared receptor...")
-    v = Vina(sf_name="vina")
+    v = Vina(sf_name="vina", seed=args.seed)
     v.set_receptor(args.receptor)
     v.compute_vina_maps(center=BOX_CENTER, box_size=BOX_SIZE)
     v.set_ligand_from_file(str(lig_pdbqt))
@@ -179,9 +198,28 @@ def main() -> None:
     log(f"  Best redock affinity:    {best_affinity:.3f} kcal/mol")
     log(f"  Reference pose:          {ref_pose}")
     log(f"  Redocked poses:          {docked_pdbqt}")
+    log(f"\n  GATE: {verdict}")
 
     report_path.write_text("\n".join(lines))
+    (out_dir / "gate_status.json").write_text(json.dumps({
+        "gate": verdict,
+        "rmsd_angstrom": rmsd,
+        "rmsd_threshold_angstrom": RMSD_THRESHOLD,
+        "redock_affinity_kcal_mol": best_affinity,
+        "ligand": LIGAND_RESNAME,
+        "receptor": args.receptor,
+        "seed": args.seed,
+    }, indent=2))
     print(f"\nFull report saved: {report_path}")
+
+    if args.strict and verdict != "PASS":
+        sys.exit(
+            f"GATE FAILED (RMSD {rmsd:.2f} A >= {RMSD_THRESHOLD} A threshold): "
+            f"refusing to treat {args.receptor} + this box as validated. "
+            f"03_run_vina.py / 04_docking_multiseed.py output against this "
+            f"receptor should be reported as provisional until this gate "
+            f"passes (see docs/setup.md)."
+        )
 
 
 if __name__ == "__main__":

@@ -14,15 +14,17 @@ DOCKING VALIDATION - 7LD (LSD) SELF-REDOCK
 [3] Preparing ligand PDBQT (OpenBabel, coordinates preserved)...
 
 [4] Redocking into the prepared receptor...
-  Best redocked affinity: -10.069 kcal/mol
+  Best redocked affinity: -10.073 kcal/mol
 
 [5] Heavy-atom RMSD vs crystal pose (top pose only)...
-  RMSD: 5.198 A  [FAIL (<2.0 A)]
+  RMSD: 5.107 A  [FAIL (<2.0 A)]
 
 ============================================================
 SUMMARY
 ============================================================
-  Redock RMSD < 2.0 A: FAIL  (5.198 A)
-  Best redock affinity:    -10.069 kcal/mol
+  Redock RMSD < 2.0 A: FAIL  (5.107 A)
+  Best redock affinity:    -10.073 kcal/mol
   Reference pose:          ../results/7LD_crystal_reference.pdb
   Redocked poses:          ../results/7LD_redocked.pdbqt
+
+  GATE: FAIL

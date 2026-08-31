@@ -13,10 +13,12 @@ A rigid AutoDock Vina screen of six serotonergic ligands (LSD, psilocybin,
 serotonin, 5-MeO-DMT, psilocin, DMT) against 5-HT2A (PDB 6WGT) produces a
 highly reproducible affinity ranking — 5-seed SD ≤0.05 kcal/mol per ligand,
 an order of magnitude below Vina's typical ~0.5 kcal/mol noise floor. But
-self-redocking 6WGT's own co-crystallized ligand (7LD, confirmed here to be
-LSD, not 25-CN-NBOH as commonly mis-cited) into the same box reproduces its
+self-redocking 6WGT's own co-crystallized ligand (7LD, confirmed against
+RCSB's entry to be LSD — Kim et al., *Cell* 2020,
+doi:10.1016/j.cell.2020.08.024 — not 25-CN-NBOH as an earlier project note
+mis-cited it) into the same box reproduces its
 blind-screen affinity almost exactly (−10.07 vs. −10.1 kcal/mol) while
-missing its crystal pose by 5.2 Å RMSD — a clear fail against the standard
+missing its crystal pose by 5.11 Å RMSD (seed 42, reproducible) — a clear fail against the standard
 2.0 Å redocking benchmark. Reproducibility and pose accuracy have come
 apart: the ranking is not a search-noise artifact, but it is not evidence
 the protocol finds the biologically real pose either. This proposal lays
@@ -36,6 +38,11 @@ same class of gap on the SERT side: rigid docking failed to reproduce a
 within noise), motivating a flexible/MD roadmap there. This project asks
 the analogous question on the 5-HT2A side, with a more direct validation
 lever available: 6WGT's own bound ligand is one of the six comparators.
+`sert-s438t-escitalopram`'s own redocking benchmark (68P into 5I6Z) fails
+the same 2.0 Å convention (6.63 Å) — the score/pose dissociation shows up
+independently in both projects, which is weak but real evidence this is a
+property of single-structure rigid Vina docking on a GPCR orthosteric
+pocket generally, not an artifact specific to either receptor's prep.
 
 ## Preliminary data
 
@@ -76,14 +83,14 @@ moderate-resolution cryo-EM GPCR structure meeko chokes on, packaged as
 The ranking, including psilocybin scoring better than psilocin, is stable
 to well under 0.1 kcal/mol across independent search seeds.
 
-**Self-redocking validation (`05_validation_redock.py`).** 7LD's crystal
-pose was extracted directly from `data/raw/6WGT.pdb` and redocked into the
-same box. Top pose: −10.069 kcal/mol (matches the blind-screen LSD score),
-RMSD to the crystal pose: 5.2 Å — a fail against the 2.0 Å convention.
-Per-atom deviation was checked across all 24 heavy atoms to rule out a
-symmetric-group name-matching artifact (LSD's diethylamide has two
-chemically equivalent ethyl arms); deviation was roughly uniform
-(2.9–8.1 Å) rather than concentrated in 2–3 atoms, consistent with a
+**Self-redocking validation (`05_validation_redock.py`, seed 42).** 7LD's
+crystal pose was extracted directly from `data/raw/6WGT.pdb` and redocked
+into the same box. Top pose: −10.073 kcal/mol (matches the blind-screen
+LSD score), RMSD to the crystal pose: 5.11 Å — a fail against the 2.0 Å
+convention. Per-atom deviation was checked across all 24 heavy atoms to
+rule out a symmetric-group name-matching artifact (LSD's diethylamide has
+two chemically equivalent ethyl arms); deviation was roughly uniform
+(3.15–8.10 Å) rather than concentrated in 2–3 atoms, consistent with a
 genuinely different bound orientation rather than an RMSD-matching
 artifact.
 
@@ -102,10 +109,22 @@ independently, and right now only one is.
 **Aim 1 — Determine whether flexibility recovers the crystal pose.**
 Re-run the 7LD self-redock with side-chain flexibility enabled around the
 orthosteric pocket residues already flagged as near-box (A:89, 135, 136,
-146, 147, 348, 350, 351, 356), and separately against a small ensemble of
-receptor conformers (short unbiased MD or normal-mode-perturbed
-structures) rather than the single rigid 6WGT coordinate set. Pass
-criterion: redocked RMSD <2.0 Å for at least one ensemble member.
+146, 147, 348, 350, 351, 356), and/or against a small ensemble of receptor
+conformers (short unbiased MD or normal-mode-perturbed structures) rather
+than the single rigid 6WGT coordinate set. Pass criterion: redocked RMSD
+<2.0 Å for at least one flexible run or ensemble member.
+*Tooling note:* the direct route — Vina flexible-residue docking via a
+rigid/flexible PDBQT split — is currently blocked on this structure: the
+`hcc` conda build of ADFRsuite used for receptor prep doesn't ship
+`prepare_flexreceptor`, and meeko's `--flexres` mode still has to
+template-match the whole polymer first and fails on one of the exact
+nine target residues (ILE A:135), independent of the earlier C-terminus
+failure. Hand-authoring the flexible PDBQT torsion trees was considered
+and rejected — a wrong chi-angle branch is silently invalid chemistry,
+not worth the risk without tooling that can validate it. Ensemble
+docking against MD-generated conformers is therefore the primary planned
+route for this aim, which folds it naturally into Aim 2's MD work rather
+than keeping it a separate rigid-docking exercise.
 
 **Aim 2 — MD-validate the top-ranked psilocin pose and re-examine the
 psilocybin ordering.** Embed the best psilocin pose in a POPC bilayer
@@ -131,9 +150,11 @@ reference structure, as a rough active-state conformation proxy.
   to any comparative tryptamine/ergoline docking study using GPCR
   cryo-EM structures at this resolution.
 - **Methodological:** the ADFR receptor-prep fallback and the paired
-  multi-seed/self-redock validation harness are reusable directly (both
-  now shared with `sert-s438t-escitalopram`) by anyone hitting meeko's
-  template-matching wall on a moderate-resolution structure.
+  multi-seed/self-redock validation harness — including a `--strict`
+  gate mode that fails the pipeline non-zero rather than silently
+  logging a warning — are reusable directly (both now shared with
+  `sert-s438t-escitalopram`) by anyone hitting meeko's template-matching
+  wall on a moderate-resolution structure.
 
 ## Limitations
 

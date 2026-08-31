@@ -53,30 +53,45 @@ See `docs/setup.md` for GROMACS GPU build notes and CHARMM-GUI walkthrough.
 
 ## Status
 
-- [x] Phase 1: docking screen — baseline complete, n=1 seed; see
-  `docs/setup.md` for the full pipeline and caveats
+> **Redock gate: FAIL.** `05_validation_redock.py --strict` currently
+> exits non-zero — the pipeline does not reproduce 6WGT's own
+> co-crystallized ligand's pose (RMSD 5.11 Å vs. a 2.0 Å pass
+> threshold, seed 42, reproducible). Every comparative
+> affinity number below (single-seed and multi-seed) is **provisional**
+> until this gate passes — see "The redock gate" below before reading
+> anything into the ranking, especially psilocybin > psilocin.
+
+- [x] Phase 1a — receptor/box setup (`docs/setup.md`)
   - [x] Receptor fetch + clean (`01_fetch_receptor.py`) — strips BRIL fusion,
     handles missing-loop chain breaks, verified against 6WGT
   - [x] Orthosteric box center sourced from the co-crystallized agonist
-    (see `docs/setup.md`)
-  - [x] Ligand prep (`02_prep_ligands.py`) — all 6 comparators (psilocin,
-    psilocybin, DMT, 5-MeO-DMT, serotonin, LSD) verified end-to-end
+    (7LD = LSD, Kim et al. *Cell* 2020 — see correction in `docs/setup.md`)
   - [x] Receptor → PDBQT — `01b_prep_receptor.py` (meeko) hits a parsing
     edge case on this structure; `01c_prep_receptor_adfr.py` (ADFRsuite)
     works and is the current path — see `docs/setup.md`
+- [x] Phase 1b — **redock gate** (`05_validation_redock.py`, ported from
+  SERT's `validation_redock.py`) — extracts 6WGT's own bound ligand and
+  redocks it into the prepared receptor/box. **Currently FAILS**
+  (RMSD 5.11 Å) despite reproducing the ligand's own blind-screen
+  affinity almost exactly. Run this — and get it to PASS — before
+  trusting Phase 1c's ranking as anything more than "the scoring
+  function likes this ligand's features." `sert-s438t-escitalopram`'s
+  own redock gate fails too (6.63 Å) — this isn't a psilocin-5ht2a-
+  specific quirk, see `docs/setup.md`.
+- [x] Phase 1c — comparative screen (**provisional**, gated by 1b)
+  - [x] Ligand prep (`02_prep_ligands.py`) — all 6 comparators (psilocin,
+    psilocybin, DMT, 5-MeO-DMT, serotonin, LSD) verified end-to-end
   - [x] Vina docking run — LSD −10.1, psilocybin −7.9, serotonin −7.1,
-    psilocin −6.9, 5-MeO-DMT −6.9, DMT −6.8 kcal/mol (single-seed
-    baseline; see multi-seed results below)
-  - [x] Multi-seed docking + redocking validation (`04_docking_multiseed.py` /
-    `05_validation_redock.py`, ported from SERT's
-    `docking_multiseed.py` / `validation_redock.py`) — 5-seed means match
-    the single-seed baseline within ≤0.05 kcal/mol SD, so the ranking is
-    **not** search-noise; but self-redocking the co-crystallized ligand
-    (7LD = LSD) gives RMSD 5.2 Å against the crystal pose (fail, <2.0 Å
-    threshold) despite reproducing its affinity almost exactly — the
-    scores are reproducible, the *pose* isn't validated. See
-    `docs/setup.md` for the full breakdown before reading anything into
-    the psilocybin > psilocin ordering.
+    psilocin −6.9, 5-MeO-DMT −6.9, DMT −6.8 kcal/mol (single seed)
+  - [x] Multi-seed confirmation (`04_docking_multiseed.py`) — 5-seed
+    means match the single-seed baseline within ≤0.05 kcal/mol SD, so
+    the ranking is **not** search-noise. It is, however, ungated: see
+    the FAIL above before treating it as a pose-level result.
+- [ ] Phase 1d — flexible/ensemble redocking to try to clear the gate
+  (see `docs/setup.md`, "Flexible-residue docking: tooling gap" —
+  meeko and this ADFRsuite build both currently block the natural
+  approach; ensemble docking against MD-generated conformers is the
+  likely path, folding this into Phase 2)
 - [ ] Phase 2: MD validation
 - [ ] Phase 3: signaling bias (stretch)
 

@@ -70,12 +70,17 @@ a short test run to confirm GPU utilization before committing to a long job.
 - **Orthosteric pocket center** (co-crystallized agonist 7LD, chain A,
   resi A1201, centroid of 24 heavy atoms): `(25.115, 40.909, 54.225)`.
   Already wired into `03_run_vina.py`. **Correction**: 7LD is LSD
-  (HETNAM: "LYSERGIC ACID DIETHYLAMIDE"), not 25-CN-NBOH as this note
-  previously said — 6WGT is the LSD-bound 5-HT2A structure (Kim et al.
-  2020). This means LSD in the Phase 1 comparator set is both the
-  co-crystallized ligand and one of the six screened tryptamines, which
-  is what makes the self-redocking check in
-  `05_validation_redock.py` meaningful.
+  (local HETNAM: "LYSERGIC ACID DIETHYLAMIDE"), not 25-CN-NBOH as this
+  note previously said. Independently confirmed against RCSB's own
+  entry page for 6WGT, which names 7LD
+  "(8alpha)-N,N-diethyl-6-methyl-9,10-didehydroergoline-8-carboxamide"
+  (LSD's systematic name) and cites Kim, K.L., Che, T., Panova, O.,
+  DiBerto, J.F., Lyu, J., Krumm, B.E., et al., "Structure of a
+  Hallucinogen-Activated Gq-Coupled 5-HT2A Serotonin Receptor," *Cell*
+  182:1574–1588 (2020), doi:10.1016/j.cell.2020.08.024. This means LSD
+  in the Phase 1 comparator set is both the co-crystallized ligand and
+  one of the six screened tryptamines, which is what makes the
+  self-redocking check in `05_validation_redock.py` meaningful.
 - **Missing loop density** (beyond the BRIL splice): gaps at residues
   182-183 and 216-218. `01_fetch_receptor.py` inserts `TER` at every
   numbering discontinuity so downstream tools don't try to bond across
@@ -146,14 +151,15 @@ pass/fail threshold — standard convention). Since 7LD is LSD (see
 correction above), this is a true self-redock: the ligand being
 validated against is also one of the six Phase 1 comparators.
 
-**Result: FAIL.** Best redocked affinity (−10.07 kcal/mol) essentially
-reproduces the blind-screen LSD score (−10.1 kcal/mol) — but the pose
-itself has RMSD 5.2 Å from the crystal pose. Per-atom deviation was
-checked atom-by-atom to rule out a symmetric-group name-matching
-artifact (LSD's diethylamide has two chemically equivalent ethyl arms
-that a naive RMSD can inflate if they're swapped) — deviations were
-roughly uniform across all 24 heavy atoms (2.9–8.1 Å), not concentrated
-in 2–3 atoms, which points to a genuinely different binding mode/
+**Result: FAIL (seed 42, reproducible).** Best redocked affinity
+(−10.073 kcal/mol) essentially reproduces the blind-screen LSD score
+(−10.1 kcal/mol) — but the pose itself has RMSD 5.11 Å from the crystal
+pose. Per-atom deviation was checked atom-by-atom to rule out a
+symmetric-group name-matching artifact (LSD's diethylamide has two
+chemically equivalent ethyl arms that a naive RMSD can inflate if
+they're swapped) — deviations were roughly uniform across all 24 heavy
+atoms (3.15–8.10 Å), not concentrated in 2–3 atoms, which points to a
+genuinely different binding mode/
 orientation rather than a symmetry artifact.
 
 **This is the single most important caveat for Phase 1**: the pipeline
@@ -162,6 +168,58 @@ means the affinity *rankings* from the blind screen should be read as
 hypothesis-generating only — scoring-function agreement with the
 correct pose is not demonstrated here — until flexible/induced-fit
 docking or MD (Phase 2) confirms binding-site geometry, not just score.
+
+Use `--strict` to make this a real pipeline gate (non-zero exit on
+FAIL, plus a machine-readable `docking/results/gate_status.json`)
+rather than just a logged warning:
+
+```bash
+python 05_validation_redock.py --strict
+```
+
+**Not a psilocin-5ht2a-specific artifact.** `sert-s438t-escitalopram`'s
+own `validation_redock.py` (68P re-dock into 5I6Z) also fails: RMSD
+6.63 Å against the same 2.0 Å threshold (`output/validation_report.txt`
+in that repo). Two independent rigid-Vina pipelines built the same way,
+against two different GPCR families, both reproduce their crystal
+ligand's affinity while missing its pose. That's weak evidence this is
+a property of "single-structure rigid Vina docking on a GPCR ortho-
+steric pocket," not a bug specific to either project's receptor prep.
+
+### Flexible-residue docking: tooling gap
+
+The natural next step (Phase 1d, see README) is Vina flexible-residue
+redocking — treat the 9 pocket-adjacent side chains (A:89 ILE, 135 ILE,
+136 LEU, 146 LYS, 147 LEU, 348 ILE, 350 LYS, 351 GLU, 356 ASP) as
+rotatable and see if that alone recovers the crystal pose, before
+committing to full MD. Two attempts at generating the required
+rigid/flexible PDBQT split both hit walls:
+
+- **ADFRsuite** (`prepare_receptor`, already working for the rigid
+  case) needs a companion `prepare_flexreceptor` to do the split. The
+  `hcc` conda build used here doesn't ship it — `$CONDA_PREFIX/bin` has
+  `prepare_receptor`/`prepare_ligand` only, no `prepare_flexreceptor*`,
+  and there's no `AutoDockTools/Utilities24` tree bundled either.
+- **meeko** (`mk_prepare_receptor --flexres`) does support this in
+  principle, but it still has to residue-template-match the *entire*
+  polymer first — same failure mode as `01b_prep_receptor.py`. Tested
+  directly: even with residue 399 (the C-terminus that broke 01b)
+  stripped out, it fails on a **different** residue, `AtomValenceException`
+  on ILE A:135 — one of the exact 9 pocket residues this step needs to
+  make flexible. Not a one-off edge case; meeko's template matching is
+  fragile broadly across this repaired structure.
+
+Hand-authoring the flexible PDBQT torsion trees directly (bypassing
+both tools) was considered and rejected: getting per-residue chi-angle
+branching wrong silently produces a chemically invalid flexible residue
+with no obvious error, which is a bad trade for a docking result headed
+into a research proposal. The safer path is either (a) install full
+MGLTools/AutoDockTools for a real `prepare_flexreceptor4.py`, or
+(b) skip flexible side chains and go straight to ensemble docking
+against a handful of receptor conformers (e.g. short restrained MD or
+normal-mode-perturbed structures) — architecturally simpler and folds
+naturally into the Phase 2 MD work already planned. (b) is the current
+default plan.
 
 ### Phase 1 baseline result (rigid single-structure docking, n=1 seed)
 
