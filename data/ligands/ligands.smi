@@ -1,0 +1,12 @@
+# Comparative ligand set for 5-HT2A docking
+# format: SMILES	name
+# NOTE: verify each SMILES against PubChem CIDs before docking runs —
+# psilocin=CID 4980, psilocybin=CID 10624, DMT=CID 6089,
+# 5-MeO-DMT=CID 1832, serotonin=CID 5202, LSD=CID 5761
+# (network here can't reach PubChem directly; check locally or via RDKit canonicalization)
+CN(C)CCc1c[nH]c2ccc(O)cc12	psilocin
+CN(C)CCc1c[nH]c2ccc(OP(=O)(O)O)cc12	psilocybin
+CN(C)CCc1c[nH]c2ccccc12	DMT
+CN(C)CCc1c[nH]c2ccc(OC)cc12	5-MeO-DMT
+NCCc1c[nH]c2ccc(O)cc12	serotonin
+CCC(=O)N[C@H]1CN([C@@H]2Cc3c[nH]c4cccc(c34)C2=C1)C	LSD

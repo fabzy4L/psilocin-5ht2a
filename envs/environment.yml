@@ -1,0 +1,25 @@
+name: psilocin-5ht2a
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - rdkit
+  - openbabel
+  - mdanalysis
+  - mdtraj
+  - numpy
+  - pandas
+  - matplotlib
+  - seaborn
+  - jupyterlab
+  - biopython
+  - pymol-open-source
+  - pip
+  - pip:
+      - vina
+      - meeko
+      - prody
+# Note: GROMACS is not pinned here — install separately as a GPU-enabled build
+# (conda-forge's gromacs package is CPU-only). See docs/setup.md for the
+# source build with CUDA support.

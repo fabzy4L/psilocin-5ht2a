@@ -1,0 +1,22 @@
+# data / results
+data/raw/*.pdb
+data/processed/*
+data/ligands/pdbqt/
+docking/results/*.pdbqt
+docking/results/*.json
+md/system_prep/*
+md/scripts/*.trr
+md/scripts/*.xtc
+md/scripts/*.cpt
+*.log
+
+# python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# conda
+envs/*.lock
+
+# os
+.DS_Store
