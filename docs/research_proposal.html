@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redocking LSD</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme: light dark;
+  --paper:#f6f3ec;
+  --ink:#1c1a24;
+  --ink-soft:#5a5568;
+  --line:#ddd3bf;
+  --accent:#5b4a9c;
+  --accent-soft:#ece6f8;
+  --teal:#1f6e6e;
+  --amber:#a05a17;
+  --amber-soft:#f6e6d0;
+  --card:#fbfaf6;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#14121c;
+    --ink:#ece7f5;
+    --ink-soft:#a89fc0;
+    --line:#332c47;
+    --accent:#a693e8;
+    --accent-soft:#241f38;
+    --teal:#5fc6c6;
+    --amber:#e0a85c;
+    --amber-soft:#2e2415;
+    --card:#1b1826;
+  }
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  font-size:17px;
+  line-height:1.6;
+}
+img{max-width:100%}
+.page{
+  max-width:740px;
+  margin:0 auto;
+  padding:4.5rem 1.5rem 6rem;
+}
+h1,h2,h3{
+  font-family:"Fraunces", Georgia, "Times New Roman", serif;
+  font-weight:600;
+  text-wrap:balance;
+  color:var(--ink);
+}
+p{margin:0 0 1.1em; max-width:65ch}
+.lede{margin-bottom:0}
+
+/* ── masthead ── */
+.kicker{
+  display:flex; align-items:center; gap:.55rem;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:1.4rem;
+}
+.kicker::before{
+  content:"";
+  width:22px; height:22px;
+  flex:none;
+  background:
+    radial-gradient(circle 2.6px at 5px 15px, var(--accent) 98%, transparent) ,
+    radial-gradient(circle 2.6px at 15px 6px, var(--accent) 98%, transparent);
+  position:relative;
+}
+h1.title{
+  font-size:clamp(2.3rem, 6vw, 3.1rem);
+  line-height:1.04;
+  margin:0 0 .5rem;
+  letter-spacing:-.01em;
+}
+.subtitle{
+  font-family:"Source Sans 3", sans-serif;
+  font-style:italic;
+  font-weight:400;
+  font-size:1.13rem;
+  color:var(--ink-soft);
+  max-width:56ch;
+  margin:0 0 2rem;
+}
+.byline{
+  display:flex; flex-wrap:wrap; gap:.4rem 1.1rem;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:.78rem;
+  color:var(--ink-soft);
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  padding:.85rem 0;
+  margin-bottom:3rem;
+}
+.byline a{color:var(--teal); text-decoration:none; border-bottom:1px solid currentColor}
+.byline a:hover{opacity:.75}
+.byline span.dim{color:var(--ink-soft); opacity:.55}
+
+/* ── sections ── */
+section{margin-bottom:2.9rem}
+h2{
+  font-size:1.5rem;
+  margin:0 0 1.1rem;
+  padding-bottom:.55rem;
+  border-bottom:1px solid var(--line);
+}
+h3{
+  font-size:1.12rem;
+  margin:1.6rem 0 .7rem;
+  color:var(--ink);
+}
+strong{font-weight:600}
+.abstract p{
+  font-size:1.03rem;
+}
+.abstract{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:3px;
+  padding:1.6rem 1.7rem 1.3rem;
+}
+
+/* ── callouts ── */
+.callout{
+  border-radius:3px;
+  padding:1.15rem 1.4rem 1.2rem;
+  margin:1.5rem 0;
+  border:1px solid var(--line);
+  border-left:3px solid var(--tag-color, var(--accent));
+  background:var(--tag-bg, var(--accent-soft));
+}
+.callout p:last-child{margin-bottom:0}
+.tag{
+  display:block;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:.68rem;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--tag-color, var(--accent));
+  margin-bottom:.5rem;
+  font-weight:600;
+}
+.callout.correction{--tag-color:var(--teal); --tag-bg:transparent}
+.callout.finding{--tag-color:var(--amber); --tag-bg:var(--amber-soft)}
+
+/* ── tables ── */
+.tablewrap{overflow-x:auto; margin:1.3rem 0}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:.86rem;
+  background:var(--card);
+  border:1px solid var(--line);
+}
+caption{
+  caption-side:top;
+  text-align:left;
+  font-family:"Source Sans 3", sans-serif;
+  font-style:italic;
+  color:var(--ink-soft);
+  font-size:.86rem;
+  margin-bottom:.5rem;
+}
+th,td{
+  padding:.55rem .9rem;
+  text-align:right;
+  border-bottom:1px solid var(--line);
+  font-variant-numeric:tabular-nums;
+}
+th:first-child, td:first-child{text-align:left; font-family:"Source Sans 3", sans-serif; font-size:.92rem}
+thead th{
+  font-family:"Source Sans 3", sans-serif;
+  font-weight:600;
+  text-align:right;
+  font-size:.78rem;
+  letter-spacing:.03em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  border-bottom:1px solid var(--ink-soft);
+}
+tbody tr:last-child td{border-bottom:none}
+tr.hl td{color:var(--accent); font-weight:600}
+
+/* ── aims ── */
+.aim{
+  display:grid;
+  grid-template-columns:2.6rem 1fr;
+  gap:0 1rem;
+  margin-bottom:1.5rem;
+  align-items:baseline;
+}
+.aim .num{
+  font-family:"Fraunces", serif;
+  font-size:1.6rem;
+  font-weight:500;
+  color:var(--accent);
+  line-height:1;
+}
+.aim h3{margin:0 0 .35rem}
+.aim p{margin-bottom:.3rem}
+
+/* ── timeline ── */
+dl.timeline{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:.5rem 1.3rem;
+  font-size:.94rem;
+  align-items:baseline;
+}
+dl.timeline dt{
+  font-weight:600;
+  grid-column:1;
+}
+dl.timeline dd.scope{
+  grid-column:2;
+  margin:0;
+  color:var(--ink-soft);
+}
+dl.timeline dd.time{
+  grid-column:3;
+  margin:0;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:.82rem;
+  color:var(--teal);
+  white-space:nowrap;
+}
+dl.timeline > div{display:contents}
+
+ul{padding-left:1.3rem; margin:0 0 1.1em}
+li{margin-bottom:.4rem; max-width:63ch}
+
+footer{
+  margin-top:3.5rem;
+  padding-top:1.5rem;
+  border-top:1px solid var(--line);
+  font-size:.85rem;
+  color:var(--ink-soft);
+}
+footer a{color:var(--teal)}
+
+@media (max-width:520px){
+  .page{padding:3rem 1.15rem 4rem}
+  .aim{grid-template-columns:2rem 1fr}
+  dl.timeline{grid-template-columns:1fr; }
+  dl.timeline dd.scope, dl.timeline dd.time{grid-column:1; margin-left:0}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="kicker"><span></span>Research Proposal &middot; Draft</div>
+  <h1 class="title">Redocking LSD</h1>
+  <p class="subtitle">A reproducible docking ranking for psilocin at 5-HT2A doesn't mean the pipeline found the right pose. Here's what the receptor's own bound ligand says when you ask it to prove that.</p>
+  <div class="byline">
+    <span>Fabian Alvarez&#8209;Primo</span>
+    <span class="dim">&middot;</span>
+    <a href="https://github.com/fabzy4L/psilocin-5ht2a">psilocin&#8209;5ht2a</a>
+    <span class="dim">&middot;</span>
+    <a href="https://github.com/fabzy4L/sert-s438t-escitalopram">sert&#8209;s438t&#8209;escitalopram</a>
+    <span class="dim">&middot;</span>
+    <span>2026&#8209;08&#8209;31</span>
+  </div>
+
+  <section class="abstract">
+    <h2 style="border:none; padding:0; margin-bottom:.8rem; font-size:1.15rem;">Abstract</h2>
+    <p>A rigid AutoDock Vina screen of six serotonergic ligands &mdash; LSD, psilocybin, serotonin, 5&#8209;MeO&#8209;DMT, psilocin, DMT &mdash; against 5&#8209;HT2A (PDB 6WGT) produces a highly reproducible affinity ranking: five&#8209;seed SD &le;0.05 kcal/mol per ligand, an order of magnitude below Vina's typical &sim;0.5 kcal/mol noise floor. But self&#8209;redocking 6WGT's own co&#8209;crystallized ligand &mdash; 7LD, confirmed here to be LSD, not 25&#8209;CN&#8209;NBOH as commonly cited &mdash; into the same box reproduces its blind&#8209;screen affinity almost exactly (&minus;10.07 vs. &minus;10.1 kcal/mol) while missing its crystal pose by 5.2&nbsp;&#197; RMSD, a clear fail against the standard 2.0&nbsp;&#197; benchmark. Reproducibility and pose accuracy have come apart. This proposal lays out the flexible&#8209;docking and MD work needed to determine whether the psilocybin&nbsp;&gt;&nbsp;psilocin ordering &mdash; and the ranking generally &mdash; reflects real binding energetics or a rigid&#8209;receptor artifact.</p>
+  </section>
+
+  <section>
+    <h2>Background</h2>
+    <p>Psilocin &mdash; psilocybin's active, dephosphorylated metabolite &mdash; and LSD are both 5&#8209;HT2A agonists whose subjective effects can be blunted by SSRI pretreatment, a clinically observed but mechanistically underspecified interaction between presynaptic reuptake blockade (SERT) and postsynaptic agonism (5&#8209;HT2A). The sibling project <code>sert&#8209;s438t&#8209;escitalopram</code> found the same class of gap on the SERT side: rigid docking failed to reproduce a 320&#8209;fold experimental K<sub>i</sub> loss from the S438T mutation (&Delta;&Delta;G +0.269&nbsp;kcal/mol, within noise), which motivated a flexible/MD roadmap there. This project asks the analogous question on the 5&#8209;HT2A side &mdash; with a more direct validation lever available, since 6WGT's own bound ligand happens to be one of the six comparators.</p>
+  </section>
+
+  <section>
+    <h2>Preliminary data</h2>
+
+    <h3>Pipeline</h3>
+    <p>6WGT (cryo&#8209;EM) required a non&#8209;trivial prep path: the BRIL fusion &mdash; a single&#8209;chain, in&#8209;frame replacement of ICL3, PDB&#8209;renumbered 1001&ndash;1106 &mdash; had to be located by walking C&alpha; residue numbers rather than trusting SEQRES; roughly 80 truncated side chains needed PDBFixer repair; and meeko's <code>mk_prepare_receptor</code> (strict RDKit&#8209;template matching) could not parse the repaired structure at all, failing on an <code>AtomValenceException</code> at the true C&#8209;terminus. ADFRsuite's <code>prepare_receptor</code> &mdash; geometry&#8209;based bond building, no template matching &mdash; succeeded where meeko didn't: a fallback that should generalize to other moderate&#8209;resolution cryo&#8209;EM GPCR structures meeko chokes on.</p>
+
+    <h3>Blind&#8209;screen ranking</h3>
+    <div class="tablewrap">
+      <table>
+        <caption>Single seed, exhaustiveness&nbsp;16</caption>
+        <thead><tr><th>Ligand</th><th>Affinity (kcal/mol)</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td>LSD</td><td>&minus;10.1</td></tr>
+          <tr><td>psilocybin</td><td>&minus;7.9</td></tr>
+          <tr><td>serotonin</td><td>&minus;7.1</td></tr>
+          <tr><td>psilocin</td><td>&minus;6.9</td></tr>
+          <tr><td>5&#8209;MeO&#8209;DMT</td><td>&minus;6.9</td></tr>
+          <tr><td>DMT</td><td>&minus;6.8</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Multi&#8209;seed confirmation</h3>
+    <div class="tablewrap">
+      <table>
+        <caption>n&nbsp;=&nbsp;5 independent seeds (42, 123, 456, 789, 1001)</caption>
+        <thead><tr><th>Ligand</th><th>Mean (kcal/mol)</th><th>SD</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td>LSD</td><td>&minus;10.045</td><td>0.021</td></tr>
+          <tr><td>psilocybin</td><td>&minus;7.837</td><td>0.033</td></tr>
+          <tr><td>serotonin</td><td>&minus;7.083</td><td>0.019</td></tr>
+          <tr><td>5&#8209;MeO&#8209;DMT</td><td>&minus;6.982</td><td>0.018</td></tr>
+          <tr><td>psilocin</td><td>&minus;6.937</td><td>0.021</td></tr>
+          <tr><td>DMT</td><td>&minus;6.872</td><td>0.054</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The ranking &mdash; including psilocybin scoring better than psilocin &mdash; is stable to well under 0.1&nbsp;kcal/mol across independent search seeds.</p>
+
+    <div class="callout correction">
+      <span class="tag">Correction</span>
+      <p>An earlier project note mislabeled 6WGT's co&#8209;crystallized ligand 7LD as 25&#8209;CN&#8209;NBOH. Its HETNAM record reads <em>"lysergic acid diethylamide"</em> &mdash; 7LD is LSD. That makes the redocking test below a genuine self&#8209;redock: the validation ligand is also one of the six screened comparators.</p>
+    </div>
+
+    <h3>Self&#8209;redocking validation</h3>
+    <p>7LD's crystal pose was extracted directly from the raw 6WGT coordinates and redocked into the same box used for the screen above.</p>
+    <div class="callout finding">
+      <span class="tag">Key finding</span>
+      <p><strong>Affinity reproduced, pose missed.</strong> Top redocked pose: &minus;10.069&nbsp;kcal/mol &mdash; matching the blind&#8209;screen LSD score almost exactly. RMSD to the crystal pose: <strong>5.2&nbsp;&#197;</strong>, against the standard 2.0&nbsp;&#197; pass threshold. Per&#8209;atom deviation was checked across all 24 heavy atoms to rule out a symmetric&#8209;group RMSD artifact (LSD's diethylamide has two chemically equivalent ethyl arms); deviation was roughly uniform, 2.9&ndash;8.1&nbsp;&#197;, not concentrated in two or three atoms &mdash; consistent with a genuinely different bound orientation, not a matching artifact.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>The problem this proposal addresses</h2>
+    <p>Two results that would normally corroborate each other have split apart. A reproducible ranking is usually read as evidence a docking protocol is &ldquo;working.&rdquo; Here, the same protocol, applied to the one ligand where ground truth exists, converges on the right affinity magnitude through the wrong geometry. The ranking's reproducibility can't be used as indirect evidence of its correctness &mdash; the two have to be established independently, and right now only one is.</p>
+  </section>
+
+  <section>
+    <h2>Specific aims</h2>
+
+    <div class="aim">
+      <span class="num">1</span>
+      <div>
+        <h3>Determine whether flexibility recovers the crystal pose</h3>
+        <p>Re&#8209;run the 7LD self&#8209;redock with side&#8209;chain flexibility enabled around the orthosteric residues already flagged as pocket&#8209;adjacent (A:89, 135, 136, 146, 147, 348, 350, 351, 356), and separately against a small ensemble of receptor conformers rather than the single rigid 6WGT structure.</p>
+        <p><strong>Pass criterion:</strong> redocked RMSD &lt;2.0&nbsp;&#197; for at least one ensemble member.</p>
+      </div>
+    </div>
+
+    <div class="aim">
+      <span class="num">2</span>
+      <div>
+        <h3>MD&#8209;validate the top psilocin pose; re&#8209;examine the psilocybin ordering</h3>
+        <p>Embed the best psilocin pose in a POPC bilayer, run 100&ndash;200&nbsp;ns with GPU offload, track RMSD/RMSF and the Asp3.32 salt bridge plus TM5 Ser/His contacts. Run MM&#8209;GBSA rescoring for psilocin and psilocybin on trajectory frames to test whether the phosphate&#8209;driven psilocybin advantage survives a flexible, solvated environment.</p>
+      </div>
+    </div>
+
+    <div class="aim">
+      <span class="num">3</span>
+      <div>
+        <h3>Signaling&#8209;bias proxy <em style="font-style:italic; color:var(--ink-soft); font-weight:400;">(stretch)</em></h3>
+        <p>Compare TM6 outward displacement in the psilocin trajectory against a G<sub>q</sub>&#8209;biased agonist reference structure, as a rough active&#8209;state conformation proxy.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Significance</h2>
+    <ul>
+      <li><strong>Clinical</strong> &mdash; a structurally grounded account of psilocin's 5&#8209;HT2A engagement is a prerequisite for reasoning about SSRI&ndash;psychedelic interactions, the question motivating the SERT/5&#8209;HT2A pairing.</li>
+      <li><strong>Scientific</strong> &mdash; a same&#8209;structure ground&#8209;truth case, rather than an assumed one, showing rigid&#8209;docking reproducibility is not a reliable proxy for pose correctness in this receptor class.</li>
+      <li><strong>Methodological</strong> &mdash; the ADFR receptor&#8209;prep fallback and the paired multi&#8209;seed/self&#8209;redock validation harness are reusable directly (already shared with <code>sert&#8209;s438t&#8209;escitalopram</code>) by anyone hitting meeko's template&#8209;matching wall on a moderate&#8209;resolution structure.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Limitations</h2>
+    <ul>
+      <li>Single starting receptor conformation (6WGT only); no explicit waters or lipids in the current prep.</li>
+      <li>Vina's empirical scoring function is not re&#8209;parameterized here for ergoline/tryptamine chemistry.</li>
+      <li>Six&#8209;ligand comparator set is small and structurally related; no non&#8209;binder negative control.</li>
+      <li>Psilocybin is a prodrug &mdash; its docking score describes a binding event unlikely to be physiologically relevant regardless of pose accuracy. Treated here as a known&#8209;artifact calibration case for the flexible/MD pipeline, not as noise to discard.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Timeline</h2>
+    <p style="margin-bottom:1rem; color:var(--ink-soft); font-size:.92rem;">Single consumer GPU (RTX&nbsp;5060, 8GB).</p>
+    <dl class="timeline">
+      <div><dt>Aim 1</dt><dd class="scope">Flexible / ensemble redocking validation</dd><dd class="time">1&ndash;2 weeks</dd></div>
+      <div><dt>Aim 2</dt><dd class="scope">MD prep, 100&ndash;200&nbsp;ns production, MM&#8209;GBSA</dd><dd class="time">3&ndash;5 weeks</dd></div>
+      <div><dt>Aim 3</dt><dd class="scope">TM6 signaling&#8209;bias proxy (stretch)</dd><dd class="time">1&ndash;2 weeks</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Target venue</h2>
+    <p><strong>Primary:</strong> bioRxiv preprint, framed as a methods/case&#8209;study note &mdash; the score&#8209;vs&#8209;pose dissociation plus the reusable ADFR/multi&#8209;seed/redock pipeline stand on their own even before Aim 2 lands. <strong>Secondary</strong>, once MD data exists: a technical note in <em>Journal of Chemical Information and Modeling</em> or <em>ACS Chemical Neuroscience</em>.</p>
+  </section>
+
+  <footer>
+    Draft proposal &middot; pipeline and raw results in <a href="https://github.com/fabzy4L/psilocin-5ht2a">github.com/fabzy4L/psilocin-5ht2a</a>, see <code>docs/setup.md</code> for full method notes.
+  </footer>
+
+</div>
+</body>
+</html>
