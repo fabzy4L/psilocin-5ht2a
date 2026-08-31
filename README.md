@@ -40,6 +40,7 @@ md/
 notebooks/        # exploratory analysis (Jupyter)
 envs/             # conda environment files
 docs/             # writeups, notes, references
+visualization/    # ChimeraX video scripts (see visualization/README.md)
 ```
 
 ## Setup
