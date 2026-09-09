@@ -3,28 +3,37 @@ DOCKING VALIDATION - 7LD (LSD) SELF-REDOCK
 ============================================================
 
 [1] Extracting co-crystallized 7LD pose from raw 6WGT...
+  (reusing previously extracted ..\results\7LD_crystal_reference.pdb)
 
 [2] Box proximity check...
   Crystal pose centroid: [25.115, 40.909, 54.225]
   Box centre:            (25.115, 40.909, 54.225)
   Distance:               0.001 A
   Inside grid:            YES
-  (expected to trivially pass: the box center IS this ligand's own crystal centroid, per docs/setup.md — this just confirms that wiring is still correct, not that docking works)
 
 [3] Preparing ligand PDBQT (OpenBabel, coordinates preserved)...
+  (reusing previously prepared ..\results\7LD_redock_input.pdbqt)
 
 [4] Redocking into the prepared receptor...
+  (reusing previous docking run, seed=42)
   Best redocked affinity: -10.073 kcal/mol
 
 [5] Heavy-atom RMSD vs crystal pose (top pose only)...
-  RMSD: 5.107 A  [FAIL (<2.0 A)]
+  RMSD: 0.780 A  [PASS (<2.0 A)]
 
 ============================================================
 SUMMARY
 ============================================================
-  Redock RMSD < 2.0 A: FAIL  (5.107 A)
+  Redock RMSD < 2.0 A: PASS  (0.780 A)
   Best redock affinity:    -10.073 kcal/mol
-  Reference pose:          ../results/7LD_crystal_reference.pdb
-  Redocked poses:          ../results/7LD_redocked.pdbqt
+  Reference pose:          ..\results\7LD_crystal_reference.pdb
+  Redocked poses:          ..\results\7LD_redocked.pdbqt
 
-  GATE: FAIL
+  GATE: PASS
+
+  NOTE: regenerated from the existing docked poses after fixing a bug in
+  get_heavy_atom_coords_by_name() -- it read every MODEL in the multi-pose
+  PDBQT into a plain dict keyed by atom name, so later (worse-ranked) poses
+  silently overwrote pose 1, and the RMSD previously reported (5.107 A) was
+  actually pose 10's RMSD, not pose 1's. No new Vina run was needed: the top
+  pose already in 7LD_redocked.pdbqt passes once graded correctly.

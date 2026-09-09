@@ -77,8 +77,18 @@ def extract_reference_pose(raw_pdb: Path, out_pdb: Path) -> None:
 
 
 def get_heavy_atom_coords_by_name(pdb_or_pdbqt: Path) -> dict:
+    """
+    Coords keyed by atom name, heavy atoms only. A multi-MODEL PDBQT (Vina's
+    n_poses output) has the same atom names repeated once per pose — without
+    stopping at the first ENDMDL, later poses silently overwrite earlier ones
+    in the dict, so this would grade the *last* (worst-ranked) pose instead of
+    the top one. Files with no MODEL record (plain reference PDBs) are read
+    in full as before.
+    """
     coords = {}
     for line in pdb_or_pdbqt.read_text().splitlines():
+        if line.startswith("ENDMDL"):
+            break
         if not (line.startswith("ATOM") or line.startswith("HETATM")):
             continue
         name = line[12:16].strip()
