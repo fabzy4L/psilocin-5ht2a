@@ -94,13 +94,14 @@ See `docs/setup.md` for GROMACS GPU build notes and CHARMM-GUI walkthrough.
     ordering reflects real binding energetics rather than a rigid-receptor
     scoring artifact on psilocybin's phosphate group; that's still an
     open question (see Phase 1d).
-- [ ] Phase 1d — flexible/ensemble redocking (optional follow-up, not
-  gating Phase 2 now that the redock gate passes) to test whether the
-  psilocybin > psilocin ranking survives side-chain flexibility around
-  the orthosteric pocket. See `docs/setup.md`, "Flexible-residue
-  docking: tooling gap" — meeko and this ADFRsuite build both currently
-  block the direct route; ensemble docking against MD-generated
-  conformers is the likely path, folding this into Phase 2.
+- [x] Phase 1d (partial) — flexible-residue redocking tooling gap closed
+  and validated on 7LD/LSD: 9 pocket residues (A:89, 135, 136, 146, 147,
+  348, 350, 351, 356) split rigid/flex via ADFRsuite's bundled pythonsh
+  (`01d_prep_flexreceptor.py`), redock PASSES at 0.958 Å once the box is
+  sized to the flex residues' reach (`05b_validation_redock_flex.py`,
+  `docs/setup.md`). **Not yet done:** re-screening the 6-ligand
+  comparator set flexibly — that's the run that actually tests whether
+  the psilocybin > psilocin ranking survives side-chain flexibility.
 - [ ] Phase 2: MD validation — pipeline scaffolded (`md/scripts/`,
   `docs/METHODOLOGY.md`, `tests/`), not yet executed: no CHARMM-GUI
   export or working GROMACS build exists in this repo yet, see

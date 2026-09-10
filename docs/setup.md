@@ -198,44 +198,59 @@ same way, in two scripts derived from a common ancestor. Neither repo's
 redock gate has actually demonstrated a rigid-docking pose-recovery
 failure; both pass.
 
-### Flexible-residue docking: tooling gap
+### Flexible-residue docking: tooling gap closed
 
 Phase 1d (see README) — Vina flexible-residue redocking, treating the 9
 pocket-adjacent side chains (A:89 ILE, 135 ILE, 136 LEU, 146 LYS, 147
-LEU, 348 ILE, 350 LYS, 351 GLU, 356 ASP) as rotatable — is now optional
-follow-up work rather than a requirement blocking Phase 2: the redock
+LEU, 348 ILE, 350 LYS, 351 GLU, 356 ASP) as rotatable — is optional
+follow-up work rather than a requirement blocking Phase 2 (the redock
 gate above already validates that the rigid protocol can recover a known
-pose. It's still worth doing to test whether the psilocybin > psilocin
-ranking (Phase 1c) survives side-chain flexibility around the pocket,
-since that's a separate question the redock gate doesn't answer. Two
-attempts at generating the required rigid/flexible PDBQT split both hit
-walls:
+pose), but the tooling gap that used to block it is now closed:
 
 - **ADFRsuite** (`prepare_receptor`, already working for the rigid
   case) needs a companion `prepare_flexreceptor` to do the split. The
-  `hcc` conda build used here doesn't ship it — `$CONDA_PREFIX/bin` has
-  `prepare_receptor`/`prepare_ligand` only, no `prepare_flexreceptor*`,
-  and there's no `AutoDockTools/Utilities24` tree bundled either.
-- **meeko** (`mk_prepare_receptor --flexres`) does support this in
-  principle, but it still has to residue-template-match the *entire*
-  polymer first — same failure mode as `01b_prep_receptor.py`. Tested
-  directly: even with residue 399 (the C-terminus that broke 01b)
-  stripped out, it fails on a **different** residue, `AtomValenceException`
-  on ILE A:135 — one of the exact 9 pocket residues this step needs to
-  make flexible. Not a one-off edge case; meeko's template matching is
-  fragile broadly across this repaired structure.
+  `hcc` conda build used here doesn't ship the CLI wrapper
+  (`prepare_flexreceptor4.py`) — but the underlying library class it
+  would call, `AutoDockTools.MoleculePreparation.AD4FlexibleReceptorPreparation`,
+  is present and importable via the ADFRsuite install's own bundled
+  Python 2 (`pythonsh`), no new install needed. `01d_prep_flexreceptor.py`
+  calls it directly and splits all 9 target residues cleanly (2589 rigid
+  + 49 flex atoms = 2638, exactly the original receptor atom count — no
+  duplication).
+- **meeko** (`mk_prepare_receptor --flexres`) still fails the same way
+  described below if you go that route instead — not needed once the
+  ADFRsuite path above works.
 
-Hand-authoring the flexible PDBQT torsion trees directly (bypassing
-both tools) was considered and rejected: getting per-residue chi-angle
-branching wrong silently produces a chemically invalid flexible residue
-with no obvious error, which is a bad trade for a docking result headed
-into a research proposal. The safer path is either (a) install full
-MGLTools/AutoDockTools for a real `prepare_flexreceptor4.py`, or
-(b) skip flexible side chains and go straight to ensemble docking
-against a handful of receptor conformers (e.g. short restrained MD or
-normal-mode-perturbed structures) — architecturally simpler and folds
-naturally into the Phase 2 MD work already planned. (b) is the current
-default plan.
+`05b_validation_redock_flex.py` validated the resulting rigid/flex split
+by redocking 7LD (LSD) with all 9 residues flexible — same bug-fixed
+RMSD logic as `05_validation_redock.py`, so directly comparable. First
+attempt, reusing the rigid gate's 20×20×20 Å box (sized to the ligand
+only), gave a nonsensical +4.058 kcal/mol / 3.724 Å FAIL: 8 of the 9 flex
+residues have atoms 10–20 Å outside that box even at rest, so Vina scored
+them off-grid — a box-sizing bug, not a finding about the pose. Enlarged
+to 44×44×36 Å (covers the 9 residues' actual reach), the same run gives
+**−10.001 kcal/mol / 0.958 Å — PASS**, consistent with the rigid gate
+(−10.073 kcal/mol / 0.780 Å). Full writeup:
+`docking/results/validation_report_flex.txt`.
+
+**Reading:** flexibility doesn't dramatically improve the pose here
+because there wasn't much left to recover — the rigid gate already
+passed. What it does establish is that the pass isn't an artifact of
+rigidity, and that the flexible-docking pipeline itself is now a real,
+working, validated capability. **Not yet done:** re-running the 6-ligand
+comparator screen (psilocybin, psilocin, serotonin, 5-MeO-DMT, DMT, LSD)
+flexibly with the same 9 residues and the enlarged box — that's the run
+that actually bears on whether the psilocybin > psilocin ranking is a
+rigid-receptor artifact, and it's a straightforward next step with the
+scripts now in place (point per-ligand docking at
+`6WGT_chainA_adfr_rigid.pdbqt` / `_flex.pdbqt` with the 44×44×36 box
+instead of the ligand-only-sized one `03_run_vina.py` currently uses,
+which would hit the same off-grid problem for those ligands too).
+
+Hand-authoring the flexible PDBQT torsion trees directly, and installing
+full MGLTools for a from-scratch `prepare_flexreceptor4.py`, were both
+considered earlier and are now moot — the bundled pythonsh route above
+needed neither.
 
 ### Phase 1 baseline result (rigid single-structure docking, n=1 seed)
 
