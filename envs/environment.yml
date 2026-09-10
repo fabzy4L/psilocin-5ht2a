@@ -15,6 +15,7 @@ dependencies:
   - jupyterlab
   - biopython
   - pymol-open-source
+  - pytest
   - pip
   - pip:
       - vina

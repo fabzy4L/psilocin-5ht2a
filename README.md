@@ -35,12 +35,15 @@ docking/
   results/        # docking logs, scored poses
 md/
   system_prep/    # CHARMM-GUI outputs, topology/coordinate files
-  scripts/        # .mdp files, run scripts
-  analysis/       # RMSD/RMSF/contact analysis scripts and plots
+  scripts/        # staged MD pipeline: import -> minimize -> equilibrate ->
+                   # production -> analysis (docs/METHODOLOGY.md) --
+                   # scaffolded, not yet executed against real GROMACS output
+  analysis/       # RMSD/RMSF/contact analysis output (written by 05_analysis.py)
 notebooks/        # exploratory analysis (Jupyter)
 envs/             # conda environment files
 docs/             # writeups, notes, references
 visualization/    # ChimeraX video scripts (see visualization/README.md)
+tests/            # pytest coverage for md/scripts/ gate logic
 ```
 
 ## Setup
@@ -93,7 +96,10 @@ See `docs/setup.md` for GROMACS GPU build notes and CHARMM-GUI walkthrough.
   meeko and this ADFRsuite build both currently block the natural
   approach; ensemble docking against MD-generated conformers is the
   likely path, folding this into Phase 2)
-- [ ] Phase 2: MD validation
+- [ ] Phase 2: MD validation — pipeline scaffolded (`md/scripts/`,
+  `docs/METHODOLOGY.md`, `tests/`), not yet executed: no CHARMM-GUI
+  export or working GROMACS build exists in this repo yet, see
+  `docs/setup.md`
 - [ ] Phase 3: signaling bias (stretch)
 
 ## Related work
