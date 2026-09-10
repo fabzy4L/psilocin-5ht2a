@@ -1,0 +1,57 @@
+============================================================
+FLEXIBLE-RESIDUE DOCKING VALIDATION - 7LD (LSD) SELF-REDOCK
+============================================================
+
+Aim 1 (README Phase 1d / docs/RESEARCH_PROPOSAL.md): does treating the 9
+pocket-adjacent side chains as flexible (A:89, 135, 136, 146, 147, 348,
+350, 351, 356) change confidence in the rigid-docking result?
+
+Tooling gap (docs/setup.md, "Flexible-residue docking: tooling gap") is
+resolved: neither the `hcc` conda ADFRsuite build's `prepare_receptor` nor
+meeko's `--flexres` mode can do the rigid/flexible PDBQT split, but the
+underlying library class both would call
+(AutoDockTools.MoleculePreparation.AD4FlexibleReceptorPreparation) is
+present and importable in this machine's local
+~/ADFRsuite-1.1dev/CCSBpckgs install via its bundled Python 2 interpreter
+(pythonsh) -- confirmed working, no new installs needed. See
+docking/scripts/01d_prep_flexreceptor.py. All 9 target residues matched
+and split cleanly (2589 rigid + 49 flex atoms = 2638, exactly the original
+receptor atom count -- no duplication).
+
+Run 1 - box unchanged (20x20x20 A, sized to the ligand only):
+  Best affinity: +4.058 kcal/mol (favorable poses should be negative)
+  RMSD vs crystal: 3.724 A [FAIL]
+  Cause (confirmed, not inferred): checked every flex-residue atom against
+  the box -- all of ILE89, LEU136, LYS146, LEU147, ILE348, LYS350, GLU351,
+  ASP356 have atoms 10-20 A from the box center even in their static
+  crystal positions (only ILE135 stays inside). Those atoms are scored
+  against Vina grid maps that don't extend anywhere near them. Not a
+  finding about flexible docking -- a box-sizing bug.
+  Artifacts: docking/results/7LD_redocked_flex_smallbox.pdbqt,
+  gate_status_flex_smallbox.json
+
+Run 2 - box enlarged to 44x44x36 A (covers the 9 residues' actual reach):
+  Best affinity: -10.001 kcal/mol (rigid gate: -10.073, blind-screen LSD:
+  -10.1)
+  RMSD vs crystal: 0.958 A [PASS] (rigid gate: 0.780 A)
+  Artifacts: docking/results/7LD_redocked_flex_bigbox.pdbqt,
+  gate_status_flex_bigbox.json
+
+Reading: once the box is sized correctly, flexible docking at these 9
+residues reproduces the crystal pose about as well as the (already
+passing) rigid gate -- 0.958 A vs. 0.780 A, both comfortably under the
+2.0 A threshold. That's not a dramatic recovery, because there was nothing
+left to recover: the rigid gate already passed. It does mean the pass
+isn't an artifact of rigidity, and the flexible pipeline itself is now a
+real, working, validated capability -- not blocked pending tooling.
+
+NOT YET DONE: re-running the 6-ligand comparator screen (psilocybin,
+psilocin, serotonin, 5-MeO-DMT, DMT, LSD) with these same 9 residues
+flexible, box enlarged the same way. That is the test that actually
+speaks to whether the psilocybin > psilocin ordering is a rigid-receptor
+artifact -- this validation run only establishes that the flexible
+pipeline itself works and doesn't break a known-good pose. Straightforward
+next step with the scripts now in place: point 03_run_vina.py-style
+per-ligand docking at receptor_rigid/receptor_flex with the 44x44x36 box
+instead of 03_run_vina.py's current 20x20x20 (which would have the exact
+same off-grid problem for these ligands too).
