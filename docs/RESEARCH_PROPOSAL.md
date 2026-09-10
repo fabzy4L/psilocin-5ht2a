@@ -7,6 +7,21 @@ failure implies for comparative rigid docking of tryptamines at 5-HT2A
 · **Related:** [`sert-s438t-escitalopram`](https://github.com/fabzy4L/sert-s438t-escitalopram)
 · **Draft date:** 2026-08-31
 
+> **Correction (post-draft).** The central finding this proposal is built
+> on — "score reproduced, pose missed," RMSD 5.107 Å against the crystal
+> pose — was a parsing bug, not a real docking result: the RMSD script
+> read every pose in the multi-model docked file into a dict keyed by
+> atom name with no model-boundary awareness, so the worst-ranked pose
+> silently overwrote the best-scoring one before RMSD was computed.
+> Graded correctly, the top pose's RMSD is **0.780 Å — a PASS**, with the
+> ergoline ring nitrogen reproducing the crystal structure's Asp155
+> (Asp3.32) salt bridge almost exactly. Full details:
+> `docs/REDOCK_BUG_HANDOFF.md`. The proposal below is preserved as
+> originally drafted, with inline flags only where the false FAIL result
+> is stated as fact — it needs a real rewrite before this goes anywhere
+> (bioRxiv or otherwise); Aims 1–3, Significance, Limitations, and the
+> Timeline have not been revisited yet.
+
 ## Abstract
 
 A rigid AutoDock Vina screen of six serotonergic ligands (LSD, psilocybin,
@@ -19,7 +34,9 @@ doi:10.1016/j.cell.2020.08.024 — not 25-CN-NBOH as an earlier project note
 mis-cited it) into the same box reproduces its
 blind-screen affinity almost exactly (−10.07 vs. −10.1 kcal/mol) while
 missing its crystal pose by 5.11 Å RMSD (seed 42, reproducible) — a clear fail against the standard
-2.0 Å redocking benchmark. Reproducibility and pose accuracy have come
+2.0 Å redocking benchmark. **[Corrected: this RMSD was a parsing bug —
+graded against the wrong pose. The real top-pose RMSD is 0.780 Å, a PASS.
+See correction notice above.]** Reproducibility and pose accuracy have come
 apart: the ranking is not a search-noise artifact, but it is not evidence
 the protocol finds the biologically real pose either. This proposal lays
 out the flexible-docking and MD work needed to determine whether the
@@ -92,9 +109,17 @@ rule out a symmetric-group name-matching artifact (LSD's diethylamide has
 two chemically equivalent ethyl arms); deviation was roughly uniform
 (3.15–8.10 Å) rather than concentrated in 2–3 atoms, consistent with a
 genuinely different bound orientation rather than an RMSD-matching
-artifact.
+artifact. **[Corrected: this 5.11 Å figure and per-atom analysis describe
+pose 10 of 10, not the top pose — see correction notice at the top of this
+document. Pose 1's RMSD is 0.780 Å, a PASS, with the salt bridge to
+Asp155 intact.]**
 
 ## The problem this proposal addresses
+
+**[Corrected: the premise of this section — that reproducibility and pose
+accuracy have split apart — does not hold once RMSD is graded against the
+correct pose. See correction notice at the top of this document. Section
+preserved as originally drafted below.]**
 
 Two results that would normally corroborate each other have split apart.
 A reproducible ranking is usually read as evidence a docking protocol is

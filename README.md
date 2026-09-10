@@ -54,13 +54,14 @@ See `docs/setup.md` for GROMACS GPU build notes and CHARMM-GUI walkthrough.
 
 ## Status
 
-> **Redock gate: FAIL.** `05_validation_redock.py --strict` currently
-> exits non-zero — the pipeline does not reproduce 6WGT's own
-> co-crystallized ligand's pose (RMSD 5.11 Å vs. a 2.0 Å pass
-> threshold, seed 42, reproducible). Every comparative
-> affinity number below (single-seed and multi-seed) is **provisional**
-> until this gate passes — see "The redock gate" below before reading
-> anything into the ranking, especially psilocybin > psilocin.
+> **Redock gate: PASS.** `05_validation_redock.py --strict` reproduces
+> 6WGT's own co-crystallized ligand's pose (RMSD 0.780 Å vs. a 2.0 Å pass
+> threshold, seed 42, top-scoring pose) and its blind-screen affinity
+> (−10.073 vs. −10.1 kcal/mol). The ergoline ring nitrogen sits 3.2–3.6 Å
+> from Asp155 (Asp3.32), matching the crystal structure's 2.8–3.3 Å salt
+> bridge. An earlier FAIL report (RMSD 5.107 Å) was a parsing bug, not a
+> real docking failure — see `docs/REDOCK_BUG_HANDOFF.md` for the full
+> writeup.
 
 - [x] Phase 1a — receptor/box setup (`docs/setup.md`)
   - [x] Receptor fetch + clean (`01_fetch_receptor.py`) — strips BRIL fusion,
@@ -72,27 +73,31 @@ See `docs/setup.md` for GROMACS GPU build notes and CHARMM-GUI walkthrough.
     works and is the current path — see `docs/setup.md`
 - [x] Phase 1b — **redock gate** (`05_validation_redock.py`, ported from
   SERT's `validation_redock.py`) — extracts 6WGT's own bound ligand and
-  redocks it into the prepared receptor/box. **Currently FAILS**
-  (RMSD 5.11 Å) despite reproducing the ligand's own blind-screen
-  affinity almost exactly. Run this — and get it to PASS — before
-  trusting Phase 1c's ranking as anything more than "the scoring
-  function likes this ligand's features." `sert-s438t-escitalopram`'s
-  own redock gate fails too (6.63 Å) — this isn't a psilocin-5ht2a-
-  specific quirk, see `docs/setup.md`.
-- [x] Phase 1c — comparative screen (**provisional**, gated by 1b)
+  redocks it into the prepared receptor/box. **PASSES** (RMSD 0.780 Å)
+  and reproduces the ligand's own blind-screen affinity almost exactly.
+  `sert-s438t-escitalopram`'s own redock gate passes too (1.515 Å) once
+  the same parsing bug is fixed there — see `docs/setup.md` and
+  `docs/REDOCK_BUG_HANDOFF.md`.
+- [x] Phase 1c — comparative screen
   - [x] Ligand prep (`02_prep_ligands.py`) — all 6 comparators (psilocin,
     psilocybin, DMT, 5-MeO-DMT, serotonin, LSD) verified end-to-end
   - [x] Vina docking run — LSD −10.1, psilocybin −7.9, serotonin −7.1,
     psilocin −6.9, 5-MeO-DMT −6.9, DMT −6.8 kcal/mol (single seed)
   - [x] Multi-seed confirmation (`04_docking_multiseed.py`) — 5-seed
     means match the single-seed baseline within ≤0.05 kcal/mol SD, so
-    the ranking is **not** search-noise. It is, however, ungated: see
-    the FAIL above before treating it as a pose-level result.
-- [ ] Phase 1d — flexible/ensemble redocking to try to clear the gate
-  (see `docs/setup.md`, "Flexible-residue docking: tooling gap" —
-  meeko and this ADFRsuite build both currently block the natural
-  approach; ensemble docking against MD-generated conformers is the
-  likely path, folding this into Phase 2)
+    the ranking is **not** search-noise. The redock gate now passing
+    means the box/receptor/scoring protocol is validated against a known
+    pose — it does **not** by itself confirm the psilocybin > psilocin
+    ordering reflects real binding energetics rather than a rigid-receptor
+    scoring artifact on psilocybin's phosphate group; that's still an
+    open question (see Phase 1d).
+- [ ] Phase 1d — flexible/ensemble redocking (optional follow-up, not
+  gating Phase 2 now that the redock gate passes) to test whether the
+  psilocybin > psilocin ranking survives side-chain flexibility around
+  the orthosteric pocket. See `docs/setup.md`, "Flexible-residue
+  docking: tooling gap" — meeko and this ADFRsuite build both currently
+  block the direct route; ensemble docking against MD-generated
+  conformers is the likely path, folding this into Phase 2.
 - [ ] Phase 2: MD validation
 - [ ] Phase 3: signaling bias (stretch)
 

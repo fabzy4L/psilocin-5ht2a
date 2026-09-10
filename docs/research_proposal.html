@@ -273,9 +273,14 @@ footer a{color:var(--teal)}
     <span>2026&#8209;08&#8209;31</span>
   </div>
 
+  <div class="callout correction">
+    <span class="tag">Correction &middot; post&#8209;draft</span>
+    <p>The central finding this proposal is built on &mdash; &ldquo;score reproduced, pose missed,&rdquo; RMSD 5.107&nbsp;&#197; against the crystal pose &mdash; was a parsing bug, not a real docking result: the RMSD script read every pose in the multi&#8209;model docked file into a dict keyed by atom name with no model&#8209;boundary awareness, so the worst&#8209;ranked pose silently overwrote the best&#8209;scoring one before RMSD was computed. Graded correctly, the top pose's RMSD is <strong>0.780&nbsp;&#197; &mdash; a PASS</strong>, with the ergoline ring nitrogen reproducing the crystal structure's Asp155 (Asp3.32) salt bridge almost exactly. Full details: <code>docs/REDOCK_BUG_HANDOFF.md</code>. The proposal below is preserved as originally drafted, with inline flags only where the false FAIL result is stated as fact &mdash; it needs a real rewrite before this goes anywhere (bioRxiv or otherwise); Aims 1&ndash;3, Significance, Limitations, and the Timeline have not been revisited yet.</p>
+  </div>
+
   <section class="abstract">
     <h2 style="border:none; padding:0; margin-bottom:.8rem; font-size:1.15rem;">Abstract</h2>
-    <p>A rigid AutoDock Vina screen of six serotonergic ligands &mdash; LSD, psilocybin, serotonin, 5&#8209;MeO&#8209;DMT, psilocin, DMT &mdash; against 5&#8209;HT2A (PDB 6WGT) produces a highly reproducible affinity ranking: five&#8209;seed SD &le;0.05 kcal/mol per ligand, an order of magnitude below Vina's typical &sim;0.5 kcal/mol noise floor. But self&#8209;redocking 6WGT's own co&#8209;crystallized ligand &mdash; 7LD, confirmed against RCSB's own entry to be LSD (Kim et al., <em>Cell</em> 2020, doi:10.1016/j.cell.2020.08.024), not 25&#8209;CN&#8209;NBOH as an earlier project note mis&#8209;cited it &mdash; into the same box reproduces its blind&#8209;screen affinity almost exactly (&minus;10.073 vs. &minus;10.1 kcal/mol) while missing its crystal pose by 5.11&nbsp;&#197; RMSD (seed 42, reproducible), a clear fail against the standard 2.0&nbsp;&#197; benchmark. Reproducibility and pose accuracy have come apart. This proposal lays out the flexible&#8209;docking and MD work needed to determine whether the psilocybin&nbsp;&gt;&nbsp;psilocin ordering &mdash; and the ranking generally &mdash; reflects real binding energetics or a rigid&#8209;receptor artifact.</p>
+    <p>A rigid AutoDock Vina screen of six serotonergic ligands &mdash; LSD, psilocybin, serotonin, 5&#8209;MeO&#8209;DMT, psilocin, DMT &mdash; against 5&#8209;HT2A (PDB 6WGT) produces a highly reproducible affinity ranking: five&#8209;seed SD &le;0.05 kcal/mol per ligand, an order of magnitude below Vina's typical &sim;0.5 kcal/mol noise floor. But self&#8209;redocking 6WGT's own co&#8209;crystallized ligand &mdash; 7LD, confirmed against RCSB's own entry to be LSD (Kim et al., <em>Cell</em> 2020, doi:10.1016/j.cell.2020.08.024), not 25&#8209;CN&#8209;NBOH as an earlier project note mis&#8209;cited it &mdash; into the same box reproduces its blind&#8209;screen affinity almost exactly (&minus;10.073 vs. &minus;10.1 kcal/mol) while missing its crystal pose by 5.11&nbsp;&#197; RMSD (seed 42, reproducible), a clear fail against the standard 2.0&nbsp;&#197; benchmark. <strong>[Corrected: this RMSD was a parsing bug &mdash; graded against the wrong pose. The real top&#8209;pose RMSD is 0.780&nbsp;&#197;, a PASS. See correction notice above.]</strong> Reproducibility and pose accuracy have come apart. This proposal lays out the flexible&#8209;docking and MD work needed to determine whether the psilocybin&nbsp;&gt;&nbsp;psilocin ordering &mdash; and the ranking generally &mdash; reflects real binding energetics or a rigid&#8209;receptor artifact.</p>
   </section>
 
   <section>
@@ -332,11 +337,13 @@ footer a{color:var(--teal)}
     <div class="callout finding">
       <span class="tag">Key finding</span>
       <p><strong>Affinity reproduced, pose missed.</strong> Top redocked pose (seed 42, reproducible): &minus;10.073&nbsp;kcal/mol &mdash; matching the blind&#8209;screen LSD score almost exactly. RMSD to the crystal pose: <strong>5.11&nbsp;&#197;</strong>, against the standard 2.0&nbsp;&#197; pass threshold. Per&#8209;atom deviation was checked across all 24 heavy atoms to rule out a symmetric&#8209;group RMSD artifact (LSD's diethylamide has two chemically equivalent ethyl arms); deviation was roughly uniform, 3.15&ndash;8.10&nbsp;&#197;, not concentrated in two or three atoms &mdash; consistent with a genuinely different bound orientation, not a matching artifact.</p>
+      <p><strong>[Corrected: this 5.11&nbsp;&#197; figure and per&#8209;atom analysis describe pose 10 of 10, not the top pose &mdash; see correction notice above. Pose 1's RMSD is 0.780&nbsp;&#197;, a PASS, with the salt bridge to Asp155 intact.]</strong></p>
     </div>
   </section>
 
   <section>
     <h2>The problem this proposal addresses</h2>
+    <p><strong>[Corrected: the premise of this section &mdash; that reproducibility and pose accuracy have split apart &mdash; does not hold once RMSD is graded against the correct pose. See correction notice above. Section preserved as originally drafted below.]</strong></p>
     <p>Two results that would normally corroborate each other have split apart. A reproducible ranking is usually read as evidence a docking protocol is &ldquo;working.&rdquo; Here, the same protocol, applied to the one ligand where ground truth exists, converges on the right affinity magnitude through the wrong geometry. The ranking's reproducibility can't be used as indirect evidence of its correctness &mdash; the two have to be established independently, and right now only one is.</p>
   </section>
 

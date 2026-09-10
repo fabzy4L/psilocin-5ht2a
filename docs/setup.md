@@ -151,23 +151,31 @@ pass/fail threshold — standard convention). Since 7LD is LSD (see
 correction above), this is a true self-redock: the ligand being
 validated against is also one of the six Phase 1 comparators.
 
-**Result: FAIL (seed 42, reproducible).** Best redocked affinity
-(−10.073 kcal/mol) essentially reproduces the blind-screen LSD score
-(−10.1 kcal/mol) — but the pose itself has RMSD 5.11 Å from the crystal
-pose. Per-atom deviation was checked atom-by-atom to rule out a
-symmetric-group name-matching artifact (LSD's diethylamide has two
-chemically equivalent ethyl arms that a naive RMSD can inflate if
-they're swapped) — deviations were roughly uniform across all 24 heavy
-atoms (3.15–8.10 Å), not concentrated in 2–3 atoms, which points to a
-genuinely different binding mode/
-orientation rather than a symmetry artifact.
+**Result: PASS (seed 42, top-scoring pose).** Best redocked affinity
+(−10.073 kcal/mol) reproduces the blind-screen LSD score
+(−10.1 kcal/mol), and the pose itself has RMSD **0.780 Å** from the
+crystal pose — well under the 2.0 Å threshold. The ergoline ring
+nitrogen sits 3.2–3.6 Å from Asp155 (Asp3.32), matching the crystal
+structure's own 2.8–3.3 Å salt-bridge geometry almost exactly.
 
-**This is the single most important caveat for Phase 1**: the pipeline
-converges on a similarly-favorable-scoring pose, not the true pose. That
-means the affinity *rankings* from the blind screen should be read as
-hypothesis-generating only — scoring-function agreement with the
-correct pose is not demonstrated here — until flexible/induced-fit
-docking or MD (Phase 2) confirms binding-site geometry, not just score.
+An earlier run of this script reported FAIL at RMSD 5.107 Å. That number
+was real, but it was computed against the wrong pose: `compute_rmsd()`
+read every `MODEL` in the 10-pose docked PDBQT into a plain dict keyed
+by atom name with no `MODEL`/`ENDMDL` awareness, so pose 10 (the
+worst-ranked pose) silently overwrote pose 1 (the best-scoring one) by
+the time RMSD was computed — the 5.107 Å figure was pose 10's RMSD, not
+pose 1's. The per-atom deviation analysis that ruled out a
+symmetric-group name-matching artifact (roughly uniform 3.15–8.10 Å
+across all 24 heavy atoms) was real too, it was just describing pose
+10's deviation, not evidence about pose 1. Fixed by stopping the parse
+at the first `ENDMDL`; full writeup in `docs/REDOCK_BUG_HANDOFF.md`. No
+re-docking was needed — the correct pose was already sitting in
+`docking/results/7LD_redocked.pdbqt`.
+
+This means the box/receptor/scoring protocol **is** validated against a
+known pose. It does not, by itself, validate the comparative ranking
+across the six screened ligands (Phase 1c) — see Phase 1d below for that
+open question.
 
 Use `--strict` to make this a real pipeline gate (non-zero exit on
 FAIL, plus a machine-readable `docking/results/gate_status.json`)
@@ -177,23 +185,31 @@ rather than just a logged warning:
 python 05_validation_redock.py --strict
 ```
 
-**Not a psilocin-5ht2a-specific artifact.** `sert-s438t-escitalopram`'s
-own `validation_redock.py` (68P re-dock into 5I6Z) also fails: RMSD
-6.63 Å against the same 2.0 Å threshold (`output/validation_report.txt`
-in that repo). Two independent rigid-Vina pipelines built the same way,
-against two different GPCR families, both reproduce their crystal
-ligand's affinity while missing its pose. That's weak evidence this is
-a property of "single-structure rigid Vina docking on a GPCR ortho-
-steric pocket," not a bug specific to either project's receptor prep.
+**Not independent corroboration across projects — same bug, twice.**
+`sert-s438t-escitalopram`'s own `validation_redock.py` (68P re-dock into
+5I6Z) was also reported as failing, RMSD 6.63 Å. This was cited here as
+weak independent evidence that rigid single-structure Vina docking on a
+GPCR orthosteric pocket generally can't recover the true pose. That
+citation no longer holds: SERT's script had the *identical* last-model-
+wins bug (BioPython's `struct.get_atoms()` iterating every model instead
+of `struct[0]`), and once fixed, its redock also PASSES — RMSD 1.515 Å
+for pose 1. Both "independent" failures were the same one bug, fixed the
+same way, in two scripts derived from a common ancestor. Neither repo's
+redock gate has actually demonstrated a rigid-docking pose-recovery
+failure; both pass.
 
 ### Flexible-residue docking: tooling gap
 
-The natural next step (Phase 1d, see README) is Vina flexible-residue
-redocking — treat the 9 pocket-adjacent side chains (A:89 ILE, 135 ILE,
-136 LEU, 146 LYS, 147 LEU, 348 ILE, 350 LYS, 351 GLU, 356 ASP) as
-rotatable and see if that alone recovers the crystal pose, before
-committing to full MD. Two attempts at generating the required
-rigid/flexible PDBQT split both hit walls:
+Phase 1d (see README) — Vina flexible-residue redocking, treating the 9
+pocket-adjacent side chains (A:89 ILE, 135 ILE, 136 LEU, 146 LYS, 147
+LEU, 348 ILE, 350 LYS, 351 GLU, 356 ASP) as rotatable — is now optional
+follow-up work rather than a requirement blocking Phase 2: the redock
+gate above already validates that the rigid protocol can recover a known
+pose. It's still worth doing to test whether the psilocybin > psilocin
+ranking (Phase 1c) survives side-chain flexibility around the pocket,
+since that's a separate question the redock gate doesn't answer. Two
+attempts at generating the required rigid/flexible PDBQT split both hit
+walls:
 
 - **ADFRsuite** (`prepare_receptor`, already working for the rigid
   case) needs a companion `prepare_flexreceptor` to do the split. The
