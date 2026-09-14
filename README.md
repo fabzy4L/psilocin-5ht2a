@@ -96,16 +96,21 @@ See `docs/setup.md` for GROMACS GPU build notes and CHARMM-GUI walkthrough.
     open question (see Phase 1d).
 - [x] Phase 1d — flexible-residue redocking: tooling gap closed and
   validated on 7LD/LSD (0.958 Å PASS, `05b_validation_redock_flex.py`),
-  then the 6-ligand comparator set re-screened flexibly
-  (`06_flex_screen.py`, `docking/results/flex_screen_report.txt`). **The
-  psilocybin > psilocin ordering survives flexibility** at these 9
-  residues — gap widens slightly (1.08 kcal/mol vs ~0.9 rigid
-  multi-seed) rather than closing. This rules out "rigid-receptor
-  artifact recoverable by side-chain flexibility" as the explanation; it
-  does not rule out a solvation/desolvation effect (psilocybin's
-  phosphate group), which needs MD (Phase 2) with explicit water to
-  test, not more docking variants. Single-seed so far — not yet
-  multi-seed confirmed the way the rigid screen was.
+  then the 6-ligand comparator set re-screened flexibly, single-seed
+  (`06_flex_screen.py`) and **multi-seed confirmed**
+  (`07_flex_multiseed.py`, same 5-seed set as the rigid screen's
+  confirmation). **The psilocybin > psilocin ordering survives
+  flexibility with high confidence**: 0.881 kcal/mol gap vs a ~0.175
+  kcal/mol combined SD (~5x), not close to noise. This rules out
+  "rigid-receptor artifact recoverable by side-chain flexibility" as the
+  explanation; it does not rule out a solvation/desolvation effect
+  (psilocybin's phosphate group), which needs MD (Phase 2) with explicit
+  water to test, not more docking variants. Also observed, flagged as
+  *not* a confirmed finding: psilocin and 5-MeO-DMT swapped relative
+  order between rigid and flexible, but that gap (0.137 kcal/mol) is
+  within the flexible screen's noise (~0.15 kcal/mol combined SD) —
+  read as indistinguishable, not a real effect. Full numbers:
+  `docking/results/flex_screen_report.txt`.
 - [ ] Phase 2: MD validation — pipeline scaffolded (`md/scripts/`,
   `docs/METHODOLOGY.md`, `tests/`), not yet executed: no CHARMM-GUI
   export or working GROMACS build exists in this repo yet, see

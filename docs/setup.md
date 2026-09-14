@@ -295,11 +295,41 @@ rule out the standing alternative hypothesis in
 favorable polar contacts that wouldn't survive explicit
 solvation/desolvation — since neither rigid nor flexible-side-chain
 Vina scoring models solvent. That question needs MD (Phase 2) with
-explicit water, not another docking variant. Also worth doing before
-leaning on this result further: a multi-seed flexible run, the same way
-the rigid screen's multi-seed confirmation ruled out search noise —
-this screen is single-seed so far. Full writeup:
-`docking/results/flex_screen_report.txt`.
+explicit water, not another docking variant.
+
+**Multi-seed confirmation (`07_flex_multiseed.py`).** Reran all 6
+ligands across the same 5-seed set as the rigid screen's confirmation
+(42, 123, 456, 789, 1001):
+
+| Ligand | Rigid mean (SD) | Flexible mean (SD) |
+|---|---:|---:|
+| LSD | −10.045 (0.021) | −10.070 (0.039) |
+| psilocybin | −7.837 (0.033) | −7.706 (0.121) |
+| serotonin | −7.083 (0.019) | −7.072 (0.061) |
+| psilocin | −6.937 (0.021) | −6.825 (0.126) |
+| 5-MeO-DMT | −6.982 (0.018) | −6.688 (0.091) |
+| DMT | −6.872 (0.054) | −6.657 (0.191) |
+
+**psilocybin > psilocin confirmed with high confidence**: 0.881
+kcal/mol gap vs. ~0.175 kcal/mol combined SD (error-propagated) — about
+5x the noise. This is the multi-seed check the single-seed screen was
+missing, and it lands in the same place.
+
+Also observed, and worth flagging honestly rather than treating as a
+second finding: psilocin and 5-MeO-DMT swapped relative order between
+rigid (5-MeO-DMT narrowly ahead, 0.045 kcal/mol) and flexible (psilocin
+ahead, 0.137 kcal/mol). That gap is comparable to the ~0.15 kcal/mol
+combined SD here — not clearly outside noise, unlike the
+psilocybin/psilocin gap. Read as "indistinguishable under either
+treatment," not as a real effect. SD generally ran 3-5x higher under
+flexibility than rigid (0.06–0.19 vs 0.018–0.054 kcal/mol) — expected,
+given 9 flexible side chains and a larger box add real search-space
+volume for Vina's stochastic search to cover, which is exactly why the
+psilocybin/psilocin gap being ~5x that noise (vs. the psilocin/5-MeO-DMT
+swap being ~1x it) matters for which result to trust.
+
+Full writeup: `docking/results/flex_screen_report.txt`. Machine-readable:
+`docking/results/flex_multiseed_summary.json`.
 
 Hand-authoring the flexible PDBQT torsion trees directly, and installing
 full MGLTools for a from-scratch `prepare_flexreceptor4.py`, were both

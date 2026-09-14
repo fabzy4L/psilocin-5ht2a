@@ -1,0 +1,21 @@
+Psilocin/5-HT2A -- Flexible-Residue Multi-Seed Confirmation
+AutoDock Vina | exhaustiveness=16 | seeds=[42, 123, 456, 789, 1001] | box=(44.0, 44.0, 36.0) A (flex-residue-sized, not ligand-sized)
+======================================================================
+
+Ligand           mean (kcal/mol)       SD    n
+---------------------------------------------
+LSD                      -10.070    0.039    5
+psilocybin                -7.706    0.121    5
+serotonin                 -7.072    0.061    5
+psilocin                  -6.825    0.126    5
+5-MeO-DMT                 -6.688    0.091    5
+DMT                       -6.657    0.191    5
+
+----------------------------------------------------------------------
+Compare against docking/results/multiseed_report.txt (rigid).
+This confirms whether the flexible screen's single-seed result
+(docking/results/flex_screen_report.txt) holds up against search
+stochasticity the same way the rigid multi-seed run confirmed the
+original blind screen -- not a claim about pose accuracy or
+solvation effects, which flexible-side-chain Vina still doesn't
+model (see docs/setup.md).

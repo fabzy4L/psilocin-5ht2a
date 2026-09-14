@@ -61,3 +61,41 @@ CAVEATS
 
 Artifacts: docking/results/{name}_flex_docked.pdbqt for each ligand,
 docking/results/flex_screen_summary.json (machine-readable).
+
+============================================================
+MULTI-SEED CONFIRMATION (07_flex_multiseed.py, same 5-seed set as the
+rigid screen's confirmation: 42, 123, 456, 789, 1001)
+============================================================
+
+  Ligand       Rigid mean (SD)      Flexible mean (SD)     n
+  -----------  -------------------  ---------------------  --
+  LSD          -10.045 (0.021)      -10.070 (0.039)         5
+  psilocybin    -7.837 (0.033)       -7.706 (0.121)         5
+  serotonin     -7.083 (0.019)       -7.072 (0.061)         5
+  psilocin      -6.937 (0.021)       -6.825 (0.126)         5
+  5-MeO-DMT     -6.982 (0.018)       -6.688 (0.091)         5
+  DMT           -6.872 (0.054)       -6.657 (0.191)         5
+
+HEADLINE RESULT CONFIRMED: psilocybin > psilocin holds with high
+confidence. Gap is 0.881 kcal/mol (-7.706 vs -6.825); combined SD via
+error propagation is ~0.175 kcal/mol -- the gap is ~5x that, nowhere
+close to noise. This is the multi-seed check the single-seed screen
+above was missing, and it lands the same place.
+
+ALSO OBSERVED, WORTH FLAGGING HONESTLY: psilocin and 5-MeO-DMT swapped
+relative order between rigid and flexible. Rigid: 5-MeO-DMT (-6.982)
+narrowly ahead of psilocin (-6.937), gap 0.045. Flexible: psilocin
+(-6.825) ahead of 5-MeO-DMT (-6.688), gap 0.137. Unlike the
+psilocybin/psilocin gap, this one is NOT clearly outside noise --
+combined SD here is ~0.15, comparable to the 0.137 gap. Read this swap
+as "these two are indistinguishable under either treatment," not as a
+second confirmed finding.
+
+SD also roughly tripled to quintupled under flexibility (0.06-0.19 vs
+0.018-0.054 rigid) -- expected, since 9 flexible side chains plus the
+larger box add real search-space volume for Vina's stochastic search to
+cover. Reinforces why the psilocybin>psilocin gap (5x the noise) is
+trustworthy while the psilocin/5-MeO-DMT swap (~1x the noise) isn't.
+
+Full machine-readable data: docking/results/flex_multiseed_summary.json.
+Raw report: docking/results/flex_multiseed_report.txt.
