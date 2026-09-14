@@ -9,17 +9,52 @@ conda activate psilocin-5ht2a
 
 ## GROMACS with GPU offload
 
-conda-forge's `gromacs` package is CPU-only. For GPU offload on the RTX
-5060, build from source with CUDA support:
+conda-forge's `gromacs` package is CPU-only. For GPU offload, build from
+source with CUDA support using `envs/build_gromacs.sh`:
 
 ```bash
-# prerequisites: CUDA toolkit matching your driver, cmake >= 3.18
+bash envs/build_gromacs.sh
+```
+
+This is a tested, working recipe (verified 2026-09-14 on WSL2 Ubuntu + an
+RTX 5060), not just the naive `cmake && make && make install` sequence —
+that naive version hits two real problems worth knowing about even if you
+run the script and never look inside it:
+
+- **CUDA toolkit version must support your GPU's architecture.** Blackwell
+  cards (RTX 50-series, `compute_120`) need CUDA 12.8+; CUDA 12.6 and
+  earlier don't know that architecture exists and fail with `nvcc fatal:
+  Unsupported gpu architecture`. The script defaults to CUDA 12.9 and lets
+  CMake auto-detect your GPU's architecture (`CMAKE_CUDA_ARCHITECTURES=native`);
+  override both via `CUDA_TOOLKIT_VERSION=` / `GMX_CUDA_ARCHITECTURES=` env
+  vars if `native` detection doesn't work for you.
+- **The final `gmx` link can fail on `undefined reference to cufftDestroy`**
+  (and similar) even though everything compiled fine — a quirk of
+  conda-packaged CUDA toolkits, where `libgromacs.so` builds successfully
+  with unresolved cuFFT symbols (shared libraries tolerate that on Linux)
+  but the final executable's link doesn't. The script detects this and
+  retries with an explicit `-lcufft` linker flag automatically.
+
+It also installs its own toolchain (cmake, gcc/g++, CUDA) into a dedicated
+conda/micromamba env rather than via `apt`, specifically so it doesn't need
+an interactive sudo password — useful if you're driving this from an
+automated session rather than a terminal you're sitting at.
+
+Full narrative of how these issues were found and fixed:
+`docs/SESSION_HANDOFF_2026-09-10.md`.
+
+If you'd rather do it by hand, or the script doesn't fit your setup, the
+underlying manual steps are:
+
+```bash
+# prerequisites: CUDA toolkit matching your GPU's architecture, cmake >= 3.18
 wget https://ftp.gromacs.org/gromacs/gromacs-2024.3.tar.gz
 tar xf gromacs-2024.3.tar.gz && cd gromacs-2024.3
 mkdir build && cd build
 cmake .. -DGMX_BUILD_OWN_FFTW=ON \
          -DGMX_GPU=CUDA \
-         -DCMAKE_INSTALL_PREFIX=$HOME/gromacs
+         -DCMAKE_INSTALL_PREFIX=$HOME/gromacs \
+         -DCMAKE_CUDA_ARCHITECTURES=native
 make -j$(nproc)
 make check      # optional but worth it before a long run
 make install
