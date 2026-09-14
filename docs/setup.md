@@ -272,15 +272,34 @@ to 44×44×36 Å (covers the 9 residues' actual reach), the same run gives
 because there wasn't much left to recover — the rigid gate already
 passed. What it does establish is that the pass isn't an artifact of
 rigidity, and that the flexible-docking pipeline itself is now a real,
-working, validated capability. **Not yet done:** re-running the 6-ligand
-comparator screen (psilocybin, psilocin, serotonin, 5-MeO-DMT, DMT, LSD)
-flexibly with the same 9 residues and the enlarged box — that's the run
-that actually bears on whether the psilocybin > psilocin ranking is a
-rigid-receptor artifact, and it's a straightforward next step with the
-scripts now in place (point per-ligand docking at
-`6WGT_chainA_adfr_rigid.pdbqt` / `_flex.pdbqt` with the 44×44×36 box
-instead of the ligand-only-sized one `03_run_vina.py` currently uses,
-which would hit the same off-grid problem for those ligands too).
+working, validated capability.
+
+**Comparator screen, flexibly (`06_flex_screen.py`).** The remaining 5
+ligands (psilocybin, psilocin, serotonin, 5-MeO-DMT, DMT) were redocked
+with the same 9 residues flexible and the 44×44×36 Å box:
+
+| Ligand | Rigid (n=5 seed mean) | Flexible (seed 42) |
+|---|---:|---:|
+| psilocybin | −7.837 | −7.710 |
+| serotonin | −7.083 | −7.085 |
+| 5-MeO-DMT | −6.982 | −6.730 |
+| psilocin | −6.937 | −6.633 |
+| DMT | −6.872 | −6.459 |
+
+**The psilocybin > psilocin ordering survives** — the gap widens
+slightly (1.077 kcal/mol here vs ~0.9 rigid multi-seed), not closes.
+That rules out "recoverable by letting these 9 pocket side chains move"
+as the explanation for psilocybin's apparent advantage. It does **not**
+rule out the standing alternative hypothesis in
+`docs/RESEARCH_PROPOSAL.md` — psilocybin's phosphate group finding
+favorable polar contacts that wouldn't survive explicit
+solvation/desolvation — since neither rigid nor flexible-side-chain
+Vina scoring models solvent. That question needs MD (Phase 2) with
+explicit water, not another docking variant. Also worth doing before
+leaning on this result further: a multi-seed flexible run, the same way
+the rigid screen's multi-seed confirmation ruled out search noise —
+this screen is single-seed so far. Full writeup:
+`docking/results/flex_screen_report.txt`.
 
 Hand-authoring the flexible PDBQT torsion trees directly, and installing
 full MGLTools for a from-scratch `prepare_flexreceptor4.py`, were both

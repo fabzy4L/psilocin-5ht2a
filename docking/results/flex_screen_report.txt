@@ -1,0 +1,63 @@
+============================================================
+FLEXIBLE-RESIDUE COMPARATOR SCREEN (Aim 1 / Phase 1d)
+============================================================
+
+Question: does the psilocybin > psilocin ordering from the rigid blind
+screen (03_run_vina.py) survive once the 9 pocket-adjacent side chains
+(A:89, 135, 136, 146, 147, 348, 350, 351, 356) are treated as flexible,
+or is it a rigid-receptor scoring artifact?
+
+Method: same box center as the rigid screen, box enlarged to 44x44x36 A
+(the rigid gate's 20x20x20 A box is sized to the ligand only and cuts
+off 8 of the 9 flex residues' actual reach -- see docs/setup.md). Single
+seed (42), exhaustiveness 16, matching 05b_validation_redock_flex.py's
+convention. LSD excluded here -- already flexibly validated in that
+script (-10.001 kcal/mol, 0.958 A RMSD vs crystal, PASS).
+
+RESULTS
+
+  Ligand       Rigid (n=5 seed mean)   Flexible (seed 42)
+  -----------  ----------------------  -------------------
+  LSD                        -10.045              -10.001 *
+  psilocybin                  -7.837               -7.710
+  serotonin                   -7.083               -7.085
+  5-MeO-DMT                   -6.982               -6.730
+  psilocin                    -6.937               -6.633
+  DMT                         -6.872               -6.459
+
+  * from 05b_validation_redock_flex.py, not this run.
+
+READING
+
+The ranking order is unchanged: LSD > psilocybin > serotonin >
+5-MeO-DMT > psilocin > DMT (matching the rigid multi-seed order exactly).
+Specifically, psilocybin > psilocin is NOT overturned by flexibility at
+these 9 residues -- if anything the gap widens slightly (1.077 kcal/mol
+here vs ~0.9 kcal/mol rigid multi-seed).
+
+This means the flexibility hypothesis (that psilocybin's apparent
+advantage is a rigid-receptor artifact recoverable by letting pocket side
+chains move) does NOT hold, at least not for these 9 residues. It does
+NOT mean the ranking is confirmed as reflecting real binding energetics:
+the standing alternative hypothesis in docs/RESEARCH_PROPOSAL.md --
+psilocybin's phosphate group finding favorable polar contacts that
+wouldn't survive explicit solvation/desolvation penalties -- is a
+solvent effect that neither rigid nor flexible-side-chain Vina scoring
+captures. That specific question still needs MD (Phase 2) with explicit
+water, not more docking variants.
+
+CAVEATS
+
+- Single seed (42), not multi-seed like the rigid screen's n=5
+  confirmation. The rigid screen's multi-seed run existed specifically to
+  rule out search stochasticity before treating small score differences
+  as meaningful -- that check has not yet been repeated here. The
+  ordering held cleanly (no close ties flipping), which is reassuring,
+  but a multi-seed flexible run would be the way to actually rule out
+  noise the same way the rigid screen did.
+- Ligand-only comparison: these are best-affinity numbers only, not a
+  pose-accuracy check (no crystal reference exists for these 5 ligands
+  the way it does for LSD/7LD).
+
+Artifacts: docking/results/{name}_flex_docked.pdbqt for each ligand,
+docking/results/flex_screen_summary.json (machine-readable).
